@@ -10,7 +10,7 @@ import java.util.List;
 
 /** A room inside a PG. Table: rooms. */
 @Entity
-@Table(name = "rooms")
+@Table(name = "rooms", uniqueConstraints = @UniqueConstraint(columnNames = {"pg_id", "room_no"}))
 @Getter
 @Setter
 @NoArgsConstructor
