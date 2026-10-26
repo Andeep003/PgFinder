@@ -2,6 +2,7 @@ package com.pgfinder.dto;
 
 import com.pgfinder.model.Bed;
 import com.pgfinder.model.Pg;
+import com.pgfinder.model.PgImage;
 import com.pgfinder.model.Room;
 
 import java.time.LocalDate;
@@ -59,7 +60,7 @@ public final class PgDtos {
             List<Integer> sharing = pg.getRooms().stream().map(Room::getSharing).distinct().sorted().toList();
             return new PgSummary(pg.getId(), pg.getName(), pg.getGender(), pg.getAddress(), pg.getLocality(),
                     pg.getCity(), pg.getLat(), pg.getLng(), List.copyOf(pg.getAmenities()),
-                    List.copyOf(pg.getImages()), sharing, PgStats.of(pg), distanceKm);
+                    PgDtos.images(pg), sharing, PgStats.of(pg), distanceKm);
         }
     }
 
@@ -72,9 +73,17 @@ public final class PgDtos {
         public static PgDetail from(Pg pg) {
             return new PgDetail(pg.getId(), pg.getOwnerId(), pg.getName(), pg.getGender(), pg.getAddress(),
                     pg.getLocality(), pg.getCity(), pg.getLat(), pg.getLng(), pg.getPhone(), pg.getDescription(),
-                    List.copyOf(pg.getAmenities()), List.copyOf(pg.getRules()), List.copyOf(pg.getImages()),
+                    List.copyOf(pg.getAmenities()), List.copyOf(pg.getRules()), PgDtos.images(pg),
                     pg.getFoodMenu(), pg.getDepositMonths(), pg.getStatus(), pg.getCreatedAt(),
                     pg.getRooms().stream().map(RoomDto::from).toList(), PgStats.of(pg));
         }
+    }
+
+    private static List<String> images(Pg pg) {
+        List<String> images = new java.util.ArrayList<>(pg.getImages());
+        for (PgImage image : pg.getUploadedImages()) {
+            images.add("/uploads/" + image.getStorageName());
+        }
+        return List.copyOf(images);
     }
 }

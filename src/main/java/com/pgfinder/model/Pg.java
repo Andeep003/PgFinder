@@ -76,8 +76,17 @@ public class Pg {
     @OrderBy("roomNo")
     private List<Room> rooms = new ArrayList<>();
 
+    @OneToMany(mappedBy = "pg", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt")
+    private List<PgImage> uploadedImages = new ArrayList<>();
+
     public void addRoom(Room room) {
         room.setPg(this);
         rooms.add(room);
+    }
+
+    public void addUploadedImage(PgImage image) {
+        image.setPg(this);
+        uploadedImages.add(image);
     }
 }

@@ -51,6 +51,9 @@ public class PgService {
     @Transactional(readOnly = true)
     public PgDetail getById(String id) {
         Pg pg = pgRepository.findById(id).orElseThrow(() -> new NotFoundException("PG not found: " + id));
+        if (!"approved".equals(pg.getStatus())) {
+            throw new NotFoundException("PG not found: " + id);
+        }
         return PgDetail.from(pg);
     }
 
