@@ -9,17 +9,17 @@ REST API for the PG Finder React app. Java 17, Spring Boot 3.3, Spring Data JPA 
 
 The Maven wrapper (`mvnw`) is included, so a separate Maven install is optional.
 
+**Default local run** (in-memory H2 database, data is reset on every restart):
+
+```powershell
+.\mvnw spring-boot:run
+```
+
 **With MySQL** (the `pgfinder` database is created automatically on first start):
 
 ```powershell
 $env:DB_PASSWORD = "your-mysql-root-password"   # $env:DB_USERNAME too if you don't use root
-.\mvnw spring-boot:run
-```
-
-**Without MySQL** (in-memory H2 database, data is reset on every restart):
-
-```powershell
-.\mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
+.\mvnw spring-boot:run "-Dspring-boot.run.arguments=--spring.profiles.active=default"
 ```
 
 The API runs at http://localhost:8080. On first start it loads the same 12 sample PGs as the
