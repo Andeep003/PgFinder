@@ -1,69 +1,63 @@
-<<<<<<< HEAD
-# PgFinder
-=======
-# PG Finder – Backend (Java / Spring Boot)
+# PgFinder Backend
 
-REST API for the PG Finder React app. Java 17, Spring Boot 3.3, Spring Data JPA (Hibernate), MySQL.
+REST API for PgFinder, built with Java 17, Spring Boot 3.3, Spring Data JPA, and MySQL. The `dev`
+profile uses an in-memory H2 database and is suitable for local testing.
 
-## Run
+## Run locally
 
 The Maven wrapper (`mvnw`) is included, so a separate Maven install is optional.
-
-**Default local run** (in-memory H2 database, data is reset on every restart):
-
-```powershell
-.\mvnw spring-boot:run
-```
 
 **With MySQL** (the `pgfinder` database is created automatically on first start):
 
 ```powershell
 $env:DB_PASSWORD = "your-mysql-root-password"   # $env:DB_USERNAME too if you don't use root
-.\mvnw spring-boot:run "-Dspring-boot.run.arguments=--spring.profiles.active=default"
+.\mvnw spring-boot:run
 ```
 
-The API runs at http://localhost:8080. On first start it loads the same 12 sample PGs as the
-frontend's `src/data/seed.js`.
+**Without MySQL** (in-memory H2 database, data is reset on every restart):
 
-Run the tests: `.\mvnw test`
+```powershell
+.\mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
 
-## APIs
+## Development sample data
 
-| Method | URL | Description |
+On an empty database, the backend seeds 12 demo PG listings with rooms, beds, amenities, rules,
+photos, and weekly food menus. The dev profile also seeds demo accounts:
+
+| Role | Email | Password |
 |---|---|---|
-| GET | `/api/pgs` | Search approved PGs. Optional query params: `lat`, `lng`, `radiusKm`, `gender` (Boys/Girls/Co-living), `sharing` (1-4, only rooms with a free bed), `maxRent`, `sort` (distance/price/name) |
-| GET | `/api/pgs/{id}` | One PG with all rooms, beds, food menu and bed stats. `404` if not found |
+| Owner | `owner1@pgfinder.local` | `demo1234` |
+| Owner | `owner2@pgfinder.local` | `demo1234` |
+| Owner | `owner3@pgfinder.local` | `demo1234` |
+| Guest | `guest@pgfinder.local` | `demo1234` |
+| Admin | `admin@pgfinder.local` | `demo1234` |
 
-Examples:
+These accounts are created only with the `dev` profile. Do not use demo credentials in production.
+Passwords for registered users are stored as BCrypt hashes. Login and registration return a
+24-hour bearer token; pass it as `Authorization: Bearer <token>` to protected endpoints.
 
-- http://localhost:8080/api/pgs?lat=17.4486&lng=78.3908&radiusKm=10
-- http://localhost:8080/api/pgs/pg-1
+## API
 
-Errors come back as `{ "status": 404, "error": "PG not found: pg-999", "timestamp": "..." }`.
+The endpoint catalog and access rules are in [API.md](./API.md). It covers authentication, public
+listing search/details, owner listing and room/bed management, bookings, reviews, complaints,
+admin moderation, and local photo uploads.
 
-## Structure
+Listing deletion is a soft delete (`status=disabled`) so existing booking/review records are
+preserved. New and edited listings are set to `pending` until an admin approves them. Booking
+creation locks the bed row and rejects overlapping date ranges.
 
+## Photo uploads
+
+Photos are stored on the local filesystem, not in the database. The default folder is `uploads/`;
+override it with `UPLOAD_DIR`. Uploads accept JPEG, PNG, or WebP up to 10 MB using multipart field
+`file`. The API returns a relative URL under `/uploads/`.
+
+Configure the frontend origin(s) with `CORS_ALLOWED_ORIGINS` as a comma-separated list. The
+defaults are `http://localhost:3000` and `http://localhost:5173`.
+
+## Test
+
+```powershell
+.\mvnw.cmd test
 ```
-src/main/java/com/pgfinder/
-  controller/   URLs (REST endpoints)  -> call services
-  service/      business logic         -> call repositories
-  repository/   database access (Spring Data JPA)
-  model/        entities = database tables (Pg, Room, Bed)
-  dto/          JSON shapes returned by the API
-  exception/    error -> JSON response mapping
-  config/       CORS (lets the React app on localhost:3000 call the API)
-  seed/         sample data loaded into an empty database
-src/main/resources/
-  application.properties       MySQL settings (default)
-  application-dev.properties   H2 in-memory settings ("dev" profile)
-```
-
-## Roadmap
-
-1. ~~Project setup, PG search and details~~
-2. Users, register/login with hashed passwords and JWT, role checks
-3. Bookings and payments (bed can't be double-booked)
-4. Owner APIs: manage PGs, rooms, beds, allocate bookings, photo upload
-5. Complaints, reviews, Super Admin approvals and settings
-6. Point the React app's `src/store/db.js` at these APIs
->>>>>>> ab16f33 (Initial commit)
