@@ -1,6 +1,6 @@
 # PgFinder Backend
 
-REST API for PgFinder, built with Java 17, Spring Boot 3.3, Spring Data JPA, and MySQL. The `dev`
+REST API for PgFinder, built with Java 25, Spring Boot 3.5, Spring Data JPA, and MySQL. The `dev`
 profile uses an in-memory H2 database and is suitable for local testing.
 
 ## Run locally

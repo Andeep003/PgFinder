@@ -1,8 +1,9 @@
-# PG Finder (frontend demo)
+# PG Finder (frontend)
 
 Location-based PG search and booking, with Resident, PG Owner (admin) and Super Admin portals.
 UI follows the HRMS_frontEnd design system (React + react-scripts + Tailwind + lucide-react, role-colored sidebars).
-All data is sample data kept in the browser's localStorage, so there is no backend yet.
+Public search and PG details use the Spring Boot API when it is available; account and portal demo
+flows continue to use browser localStorage.
 
 ## Run
 
@@ -10,6 +11,16 @@ All data is sample data kept in the browser's localStorage, so there is no backe
 npm install
 npm start         # React development server at http://localhost:3000
 ```
+
+Start the backend separately from the repository root with its dev profile:
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+The frontend calls `http://localhost:8080` by default. Override the API origin with
+`REACT_APP_API_URL` if the backend is hosted elsewhere. If the API is unavailable, the search page
+falls back to its local sample listings.
 
 ## Demo accounts
 
@@ -50,5 +61,5 @@ src/
   pages/superadmin/       Super Admin portal
 ```
 
-To connect a real backend, replace the functions in `src/store/db.js` with API calls. The pages
-only use those functions.
+The API client is in `src/api.js`. Public PG search and detail pages call `/api/pgs`; the remaining
+demo account, booking, owner and admin flows still use `src/store/db.js`.

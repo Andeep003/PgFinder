@@ -218,6 +218,29 @@ class BackendApiTest {
                 .andExpect(status().isConflict());
     }
 
+    @Test
+    void bookingRejectsBedsInUnapprovedListings() throws Exception {
+        var pg = pgs.findById("pg-1").orElseThrow();
+        pg.setStatus("pending");
+        pgs.save(pg);
+
+        Bed bed = pg.getRooms().stream()
+                .flatMap(room -> room.getBeds().stream())
+                .filter(candidate -> "available".equals(candidate.getStatus()))
+                .findFirst().orElseThrow();
+        String guestToken = login("guest@pgfinder.local");
+        LocalDate start = LocalDate.now().plusDays(45);
+        String body = """
+                {"bedId":%d,"startDate":"%s","endDate":"%s"}
+                """.formatted(bed.getId(), start, start.plusDays(4));
+
+        mvc.perform(post("/api/bookings")
+                        .header("Authorization", bearer(guestToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
+    }
+
     private String login(String email) throws Exception {
         MvcResult result = mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

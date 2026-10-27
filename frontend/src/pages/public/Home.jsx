@@ -6,6 +6,7 @@ import { EmptyState } from '../../components/ui';
 import { useDB, pgStats, pgRating, isPgPublic, ensureNearbyDemoPgs, getState } from '../../store/db';
 import { DEFAULT_LOCATION, LOCALITIES } from '../../data/seed';
 import { distanceKm, geocode, getCurrentPosition, reverseGeocode } from '../../utils/geo';
+import { apiGet, apiImageUrl } from '../../api';
 
 const LOC_KEY = 'pgfinder-last-location';
 const RADII = [2, 5, 10, 25, 50];
@@ -31,6 +32,44 @@ export default function Home() {
   const [view, setView] = useState('list');
   const [hoverId, setHoverId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [apiPgs, setApiPgs] = useState(null);
+  const [apiStatus, setApiStatus] = useState('loading');
+  const centerLat = center?.lat;
+  const centerLng = center?.lng;
+
+  useEffect(() => {
+    if (centerLat == null || centerLng == null) return undefined;
+    let active = true;
+    const params = new URLSearchParams({
+      lat: String(centerLat),
+      lng: String(centerLng),
+      sort: sort === 'price' ? 'price' : 'distance',
+    });
+    if (radius !== 'any') params.set('radiusKm', String(radius));
+    if (gender !== 'All') params.set('gender', gender);
+    if (sharing !== 'Any') params.set('sharing', sharing);
+    params.set('maxRent', String(budget));
+
+    setApiStatus('loading');
+    apiGet(`/api/pgs?${params}`)
+      .then((listings) => {
+        if (!active) return;
+        setApiPgs(listings.map((pg) => ({
+          ...pg,
+          images: (pg.images || []).map(apiImageUrl),
+        })));
+        setApiStatus('connected');
+      })
+      .catch(() => {
+        if (!active) return;
+        setApiPgs(null);
+        setApiStatus('offline');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [centerLat, centerLng, radius, gender, sharing, budget, sort]);
 
   const applyCenter = useCallback((c) => {
     setCenter(c);
@@ -81,17 +120,22 @@ export default function Home() {
 
   const results = useMemo(() => {
     if (!center) return [];
-    return db.pgs
-      .filter((pg) => isPgPublic(db, pg))
-      .map((pg) => ({ pg, stats: pgStats(pg), rating: pgRating(db, pg.id), distance: distanceKm(center, pg) }))
-      .filter((r) => radius === 'any' || r.distance <= radius)
-      .filter((r) => gender === 'All' || r.pg.gender === gender)
-      .filter((r) => r.stats.minRent <= budget)
-      .filter((r) => sharing === 'Any' || r.pg.rooms.some((room) => room.sharing === Number(sharing) && room.beds.some((b) => b.status === 'available')))
+    const listings = apiPgs ?? db.pgs.filter((pg) => isPgPublic(db, pg));
+    return listings
+      .map((pg) => ({
+        pg,
+        stats: pg.stats ?? pgStats(pg),
+        rating: pgRating(db, pg.id),
+        distance: pg.distanceKm ?? distanceKm(center, pg),
+      }))
+      .filter((r) => apiPgs || radius === 'any' || r.distance <= radius)
+      .filter((r) => apiPgs || gender === 'All' || r.pg.gender === gender)
+      .filter((r) => apiPgs || r.stats.minRent <= budget)
+      .filter((r) => apiPgs || sharing === 'Any' || r.pg.rooms.some((room) => room.sharing === Number(sharing) && room.beds.some((b) => b.status === 'available')))
       .sort((a, b) =>
         sort === 'price' ? a.stats.minRent - b.stats.minRent : sort === 'rating' ? b.rating.avg - a.rating.avg : a.distance - b.distance,
       );
-  }, [db, center, radius, gender, budget, sharing, sort]);
+  }, [db, apiPgs, center, radius, gender, budget, sharing, sort]);
 
   const filters = (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -190,6 +234,11 @@ export default function Home() {
               )}
             </div>
             <div className="mt-0.5 text-lg font-semibold text-foreground">{results.length} PGs found</div>
+            <div className="mt-1 text-xs text-muted-foreground" role="status">
+              {apiStatus === 'connected' && 'Live listings from backend'}
+              {apiStatus === 'loading' && 'Connecting to backend…'}
+              {apiStatus === 'offline' && 'Backend unavailable — showing local demo listings'}
+            </div>
           </div>
           <div className="flex gap-2">
             <button className="btn-outline lg:hidden" onClick={() => setShowFilters((v) => !v)}>

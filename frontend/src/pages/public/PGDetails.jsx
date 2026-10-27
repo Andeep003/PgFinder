@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CalendarCheck, CheckCircle2, MapPin, Phone, ShieldCheck, Utensils } from 'lucide-react';
 import PublicNavbar from '../../components/PublicNavbar';
@@ -6,15 +6,32 @@ import { BedLegend, FoodMenuTable, ImageGallery, PGMap, ReviewList, RoomCard } f
 import { Card, EmptyState, Stars } from '../../components/ui';
 import { useDB, findPg, pgStats, pgRating, findUser } from '../../store/db';
 import { inr } from '../../utils/format';
+import { apiGet, apiImageUrl } from '../../api';
 
 export default function PGDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const db = useDB();
-  const pg = findPg(db, id);
+  const [apiPg, setApiPg] = useState(null);
+  const localPg = findPg(db, id);
+  const pg = apiPg ?? localPg;
   const [selected, setSelected] = useState(null);
   const [floor, setFloor] = useState('All');
   const [onlyFree, setOnlyFree] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    apiGet(`/api/pgs/${encodeURIComponent(id)}`)
+      .then((listing) => {
+        if (active) setApiPg({ ...listing, images: (listing.images || []).map(apiImageUrl) });
+      })
+      .catch(() => {
+        if (active) setApiPg(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const reviews = useMemo(() => db.reviews.filter((r) => r.pgId === id).sort((a, b) => b.date.localeCompare(a.date)), [db, id]);
 

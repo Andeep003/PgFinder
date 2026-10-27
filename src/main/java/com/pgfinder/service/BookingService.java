@@ -49,6 +49,10 @@ public class BookingService {
         }
         Bed bed = beds.findByIdForUpdate(request.bedId())
                 .orElseThrow(() -> new NotFoundException("Bed not found: " + request.bedId()));
+        Pg pg = bed.getRoom().getPg();
+        if (!"approved".equals(pg.getStatus())) {
+            throw new NotFoundException("PG not found: " + pg.getId());
+        }
         List<Booking> currentBookings = bookings.findByBedIdAndStatusOrderByStartDateAsc(bed.getId(), "confirmed");
         if ("occupied".equals(bed.getStatus()) || "maintenance".equals(bed.getStatus())
                 || ("booked".equals(bed.getStatus()) && currentBookings.isEmpty())
