@@ -29,9 +29,9 @@ admin accounts are provisioned separately. Tokens expire after 24 hours.
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/api/owner/pgs` | List the signed-in owner's PGs |
-| POST | `/api/owner/pgs` | Create a PG listing |
+| POST | `/api/owner/pgs` | Create a PG listing; include `googleMapsUrl` with an HTTPS Google Maps URL and coordinates (`lat`, `lng`) |
 | GET | `/api/owner/pgs/{pgId}` | Get one of the owner's PGs |
-| PUT | `/api/owner/pgs/{pgId}` | Update one of the owner's PGs |
+| PUT | `/api/owner/pgs/{pgId}` | Update one of the owner's PGs; include `googleMapsUrl` with an HTTPS Google Maps URL and coordinates (`lat`, `lng`) |
 | DELETE | `/api/owner/pgs/{pgId}` | Delete one of the owner's PGs |
 
 New and edited listings must follow the listing approval flow. Owners may manage

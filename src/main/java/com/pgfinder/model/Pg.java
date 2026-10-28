@@ -35,6 +35,8 @@ public class Pg {
     private String address;
     private String locality;
     private String city;
+    @Column(length = 2048)
+    private String googleMapsUrl;
     private double lat;
     private double lng;
     private String phone;

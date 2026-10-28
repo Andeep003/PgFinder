@@ -7,6 +7,7 @@ import { Card, EmptyState, Stars } from '../../components/ui';
 import { useDB, findPg, pgStats, pgRating, findUser } from '../../store/db';
 import { inr } from '../../utils/format';
 import { apiGet, apiImageUrl } from '../../api';
+import { googleMapsUrl } from '../../utils/geo';
 
 export default function PGDetails() {
   const { id } = useParams();
@@ -80,6 +81,9 @@ export default function PGDetails() {
               <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="size-4" /> {pg.address}, {pg.city}
               </div>
+              <a href={googleMapsUrl(pg)} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                Open this PG in Google Maps <MapPin className="size-4" />
+              </a>
               <div className="mt-2 flex items-center gap-2 text-sm">
                 <Stars value={rating.avg} />
                 <span className="font-semibold text-foreground">{rating.avg ? rating.avg.toFixed(1) : 'New'}</span>

@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { BedDouble, BedSingle, ChevronLeft, ChevronRight, MapPin, Snowflake, Bath } from 'lucide-react';
+import { BedDouble, BedSingle, ChevronLeft, ChevronRight, MapPin, Snowflake, Bath, ExternalLink } from 'lucide-react';
 import { Photo, Stars } from './ui';
 import { inr, WEEKDAYS, todayName } from '../utils/format';
+import { googleMapsUrl } from '../utils/geo';
 
 // ---------- Image gallery ----------
 export function ImageGallery({ images = [], name }) {
@@ -114,17 +115,17 @@ export function RoomCard({ room, selected, onSelectBed, compact }) {
 // ---------- PG list card ----------
 export function PGCard({ pg, stats, rating, distance, active, onHover }) {
   return (
-    <Link
-      to={`/pg/${pg.id}`}
+    <div
       onMouseEnter={() => onHover?.(pg.id)}
       onMouseLeave={() => onHover?.(null)}
       className={`group flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row ${active ? 'border-primary' : 'border-border/80'}`}
     >
-      <div className="relative sm:w-56 sm:shrink-0">
+      <Link to={`/pg/${pg.id}`} className="relative sm:w-56 sm:shrink-0">
         <Photo src={pg.images[0]} alt={pg.name} className="h-44 w-full sm:h-full" />
         <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-slate-700">{pg.gender}</span>
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col p-4">
+        <Link to={`/pg/${pg.id}`} className="flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-foreground group-hover:text-primary">{pg.name}</h3>
           {rating.count > 0 && (
@@ -137,6 +138,17 @@ export function PGCard({ pg, stats, rating, distance, active, onHover }) {
           <MapPin className="size-3.5 shrink-0" />
           <span className="truncate">{pg.address}, {pg.city}</span>
         </div>
+        </Link>
+        <a
+          href={googleMapsUrl(pg)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
+          <ExternalLink className="size-3.5" /> View location on Google Maps
+        </a>
+        <Link to={`/pg/${pg.id}`} className="flex flex-1 flex-col">
         {distance != null && <div className="mt-1 text-xs font-medium text-primary">{distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away</div>}
         <div className="mt-2 flex flex-wrap gap-1.5">
           {pg.amenities.slice(0, 5).map((a) => (
@@ -153,8 +165,9 @@ export function PGCard({ pg, stats, rating, distance, active, onHover }) {
             {stats.available ? `${stats.available} beds available` : 'Fully occupied'}
           </span>
         </div>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -185,6 +198,8 @@ export function PGMap({ center, items = [], activeId, height = 'h-[420px]', zoom
                 <div className="font-semibold">{pg.name}</div>
                 <div className="text-xs text-slate-500">{pg.gender} · {stats.available} beds free</div>
                 <a href={`/pg/${pg.id}`} className="text-xs font-semibold text-blue-600">View details →</a>
+                <br />
+                <a href={googleMapsUrl(pg)} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600">Open in Google Maps</a>
               </div>
             </Popup>
           </Marker>

@@ -9,6 +9,37 @@ export function distanceKm(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+export function isGoogleMapsUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') return false;
+    if (['maps.app.goo.gl', 'maps.google.com'].includes(url.hostname)) return true;
+    return ['goo.gl', 'google.com', 'www.google.com'].includes(url.hostname)
+      && url.pathname.startsWith('/maps');
+  } catch {
+    return false;
+  }
+}
+
+export function googleMapsUrl(pg) {
+  if (isGoogleMapsUrl(pg.googleMapsUrl)) return pg.googleMapsUrl;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pg.lat},${pg.lng}`)}`;
+}
+
+export function coordinatesFromGoogleMapsUrl(value) {
+  if (!isGoogleMapsUrl(value)) return null;
+  const url = new URL(value);
+  const direct = [url.searchParams.get('query'), url.searchParams.get('q'), url.searchParams.get('ll')]
+    .find((coordinate) => coordinate && /^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(coordinate));
+  const match = direct?.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/)
+    || url.href.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
+    || url.href.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (!match) return null;
+  const lat = Number(match[1]);
+  const lng = Number(match[2]);
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
 export function getCurrentPosition() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));

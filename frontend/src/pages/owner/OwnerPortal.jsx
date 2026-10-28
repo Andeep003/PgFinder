@@ -14,7 +14,7 @@ import {
 } from '../../store/db';
 import { AMENITIES, DEFAULT_FOOD_MENU } from '../../data/seed';
 import { compressImage, fmtDate, inr, WEEKDAYS } from '../../utils/format';
-import { getCurrentPosition } from '../../utils/geo';
+import { coordinatesFromGoogleMapsUrl, getCurrentPosition, googleMapsUrl, isGoogleMapsUrl } from '../../utils/geo';
 import { dueInfo } from '../user/UserPortal';
 
 function useOwnerData() {
@@ -186,8 +186,9 @@ function Dashboard() {
 
 // ------------------------------------------------------------------ My PGs
 const blankPg = (ownerId) => ({
-  ownerId, name: '', gender: 'Boys', address: '', locality: '', city: '', lat: 17.4486, lng: 78.3908, phone: '',
-  description: '', amenities: ['Wi-Fi', 'Food'], rules: ['Gate closes at 11:00 PM'], images: [], depositMonths: 1,
+  ownerId, name: '', gender: 'Boys', address: '', locality: '', city: '', lat: '', lng: '', phone: '',
+  googleMapsUrl: '', description: '', amenities: ['Wi-Fi', 'Food'],
+  rules: ['Gate closes at 11:00 PM'], images: [], depositMonths: 1,
   foodMenu: structuredClone(DEFAULT_FOOD_MENU), status: 'pending', rooms: [],
 });
 
@@ -242,10 +243,22 @@ function MyPGs() {
 }
 
 function PgForm({ pg: initial, onClose }) {
-  const [pg, setPg] = useState(initial);
+  const [pg, setPg] = useState(() => ({
+    ...initial,
+    googleMapsUrl: initial.googleMapsUrl || googleMapsUrl(initial),
+  }));
   const [uploading, setUploading] = useState(false);
   const isNew = !initial.id;
   const set = (k) => (e) => setPg({ ...pg, [k]: e.target.value });
+  const setMapsUrl = (e) => {
+    const googleMapsUrlValue = e.target.value;
+    const coordinates = coordinatesFromGoogleMapsUrl(googleMapsUrlValue);
+    setPg((current) => ({
+      ...current,
+      googleMapsUrl: googleMapsUrlValue,
+      ...(coordinates || {}),
+    }));
+  };
 
   const upload = async (e) => {
     const files = [...e.target.files];
@@ -270,6 +283,7 @@ function PgForm({ pg: initial, onClose }) {
   const save = (e) => {
     e.preventDefault();
     if (!pg.images.length) return toast('Please upload at least one photo', 'error');
+    if (!isGoogleMapsUrl(pg.googleMapsUrl)) return toast('Enter a valid Google Maps link using HTTPS', 'error');
     savePg({ ...pg, lat: Number(pg.lat), lng: Number(pg.lng), depositMonths: Number(pg.depositMonths) });
     toast(isNew ? 'PG submitted for Super Admin approval' : 'PG updated');
     onClose();
@@ -288,6 +302,11 @@ function PgForm({ pg: initial, onClose }) {
           <div className="sm:col-span-2"><label className="label">Address</label><input className="input" value={pg.address} onChange={set('address')} required /></div>
           <div><label className="label">Locality</label><input className="input" value={pg.locality} onChange={set('locality')} required /></div>
           <div><label className="label">City</label><input className="input" value={pg.city} onChange={set('city')} required /></div>
+          <div className="sm:col-span-2">
+            <label className="label">Google Maps link <span className="text-red-500">*</span></label>
+            <input className="input" type="url" value={pg.googleMapsUrl} onChange={setMapsUrl} placeholder="https://maps.app.goo.gl/..." required />
+            <p className="mt-1 text-xs text-muted-foreground">Paste the PG's Google Maps share link. If it contains coordinates, the map position updates automatically; otherwise enter the location's latitude and longitude below.</p>
+          </div>
           <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2 sm:col-span-2">
             <div><label className="label">Latitude</label><input className="input" type="number" step="any" value={pg.lat} onChange={set('lat')} required /></div>
             <div><label className="label">Longitude</label><input className="input" type="number" step="any" value={pg.lng} onChange={set('lng')} required /></div>
