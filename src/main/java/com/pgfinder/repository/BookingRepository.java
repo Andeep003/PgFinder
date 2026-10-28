@@ -16,15 +16,19 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
 
     List<Booking> findByBedIdAndStatusOrderByStartDateAsc(Long bedId, String status);
 
+    List<Booking> findByBedIdAndStatusInOrderByStartDateAsc(Long bedId, List<String> statuses);
+
     boolean existsByBedId(Long bedId);
 
     boolean existsByGuestIdAndBedRoomPgIdAndStatus(String guestId, String pgId, String status);
 
-    @Query("select count(b) > 0 from Booking b where b.bed.id = :bedId and b.status <> 'cancelled' "
+    @Query("select count(b) > 0 from Booking b where b.bed.id = :bedId "
+            + "and b.status not in ('cancelled', 'vacated') "
             + "and b.startDate < :endDate and b.endDate > :startDate")
     boolean existsOverlapping(@Param("bedId") Long bedId, @Param("startDate") LocalDate startDate,
                               @Param("endDate") LocalDate endDate);
 
-    @Query("select count(b) > 0 from Booking b where b.bed.id = :bedId and b.status <> 'cancelled'")
+    @Query("select count(b) > 0 from Booking b where b.bed.id = :bedId "
+            + "and b.status not in ('cancelled', 'vacated')")
     boolean hasActiveBooking(@Param("bedId") Long bedId);
 }

@@ -23,6 +23,7 @@ export default function Home() {
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState('');
   const [query, setQuery] = useState('');
+  const [nameQuery, setNameQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [gender, setGender] = useState('All');
   const [sharing, setSharing] = useState('Any');
@@ -45,7 +46,8 @@ export default function Home() {
       lng: String(centerLng),
       sort: sort === 'price' ? 'price' : 'distance',
     });
-    if (radius !== 'any') params.set('radiusKm', String(radius));
+    if (radius !== 'any' && !nameQuery) params.set('radiusKm', String(radius));
+    if (nameQuery) params.set('name', nameQuery);
     if (gender !== 'All') params.set('gender', gender);
     if (sharing !== 'Any') params.set('sharing', sharing);
     params.set('maxRent', String(budget));
@@ -69,7 +71,7 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [centerLat, centerLng, radius, gender, sharing, budget, sort]);
+  }, [centerLat, centerLng, radius, gender, sharing, budget, sort, nameQuery]);
 
   const applyCenter = useCallback((c) => {
     setCenter(c);
@@ -107,20 +109,46 @@ export default function Home() {
   const onSearch = async (e) => {
     e?.preventDefault();
     if (!query.trim()) return;
+    const searchTerm = query.trim();
     setSearching(true);
-    const hit = await geocode(query);
-    setSearching(false);
-    if (hit) {
-      applyCenter({ ...hit, source: 'search' });
-      setLocError('');
-    } else {
-      setLocError(`Couldn't find "${query}". Try an area name like Madhapur or Koramangala.`);
+    setLocError('');
+
+    try {
+      const matches = await apiGet(`/api/pgs?name=${encodeURIComponent(searchTerm)}`);
+      const hasLocalMatch = db.pgs.some((pg) =>
+        isPgPublic(db, pg) && pg.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      if (matches.length > 0 || hasLocalMatch) {
+        setNameQuery(searchTerm);
+        setSearching(false);
+        return;
+      }
+    } catch {
+      const hasLocalMatch = db.pgs.some((pg) =>
+        isPgPublic(db, pg) && pg.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      if (hasLocalMatch) {
+        setNameQuery(searchTerm);
+        setSearching(false);
+        return;
+      }
     }
+
+    const hit = await geocode(searchTerm);
+    if (hit) {
+      setNameQuery('');
+      applyCenter({ ...hit, source: 'search' });
+    } else {
+      setNameQuery(searchTerm);
+      setLocError(`No PG name or location matched "${searchTerm}". Try another name, area, locality, or city.`);
+    }
+    setSearching(false);
   };
 
   const results = useMemo(() => {
     if (!center) return [];
-    const listings = apiPgs ?? db.pgs.filter((pg) => isPgPublic(db, pg));
+    const localListings = db.pgs.filter((pg) => isPgPublic(db, pg));
+    const listings = nameQuery
+      ? [...new Map([...(apiPgs ?? []), ...localListings].map((pg) => [pg.id, pg])).values()]
+      : apiPgs ?? localListings;
     return listings
       .map((pg) => ({
         pg,
@@ -128,14 +156,15 @@ export default function Home() {
         rating: pgRating(db, pg.id),
         distance: pg.distanceKm ?? distanceKm(center, pg),
       }))
-      .filter((r) => apiPgs || radius === 'any' || r.distance <= radius)
+      .filter((r) => !nameQuery || r.pg.name.toLowerCase().includes(nameQuery.toLowerCase()))
+      .filter((r) => apiPgs || nameQuery || radius === 'any' || r.distance <= radius)
       .filter((r) => apiPgs || gender === 'All' || r.pg.gender === gender)
       .filter((r) => apiPgs || r.stats.minRent <= budget)
       .filter((r) => apiPgs || sharing === 'Any' || r.pg.rooms.some((room) => room.sharing === Number(sharing) && room.beds.some((b) => b.status === 'available')))
       .sort((a, b) =>
         sort === 'price' ? a.stats.minRent - b.stats.minRent : sort === 'rating' ? b.rating.avg - a.rating.avg : a.distance - b.distance,
       );
-  }, [db, apiPgs, center, radius, gender, budget, sharing, sort]);
+  }, [db, apiPgs, center, radius, gender, budget, sharing, sort, nameQuery]);
 
   const filters = (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -192,7 +221,7 @@ export default function Home() {
                 list="localities"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by area, locality or city (e.g. Madhapur, Koramangala)"
+                placeholder="Search by PG name or area (e.g. Pakka Telangana, Madhapur)"
                 className="h-11 w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
               <datalist id="localities">{LOCALITIES.map((l) => <option key={l.name} value={l.name} />)}</datalist>

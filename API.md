@@ -9,7 +9,7 @@ This file documents the implemented backend routes. Protected endpoints require
 
 | Method | Endpoint | Description | Status |
 |---|---|---|---|
-| GET | `/api/pgs` | Search approved PG listings; accepts optional `lat`, `lng`, `radiusKm`, `gender`, `sharing`, `maxRent`, and `sort` query parameters | Implemented |
+| GET | `/api/pgs` | Search approved PG listings; accepts optional `name` (case-insensitive partial match), `lat`, `lng`, `radiusKm`, `gender`, `sharing`, `maxRent`, and `sort` query parameters | Implemented |
 | GET | `/api/pgs/{pgId}` | Get a PG with its rooms and beds | Implemented |
 | GET | `/api/pgs/{pgId}/availability` | Get availability for a PG; optionally provide both `startDate` and `endDate` as ISO dates | Implemented |
 
@@ -58,10 +58,14 @@ All routes in this section are restricted to the owner of the PG.
 | POST | `/api/bookings` | Create a booking | Authenticated guest |
 | GET | `/api/bookings/my` | List the signed-in guest's bookings | Authenticated guest |
 | GET | `/api/owner/bookings` | List bookings for the signed-in owner's PGs | Owner |
+| PATCH | `/api/bookings/{bookingId}/vacate-request` | Ask the PG owner to confirm that the guest has vacated | Booking guest |
+| PATCH | `/api/owner/bookings/{bookingId}/confirm-vacancy` | Confirm a pending vacancy request and release the bed | Relevant owner |
 | PATCH | `/api/bookings/{bookingId}/cancel` | Cancel a booking | Booking guest or relevant owner |
 
-Booking creation must prevent overlapping bookings for the same bed and dates. A confirmed
-booking is required before a user can post a review.
+Booking creation must prevent overlapping bookings for the same bed and dates. A vacancy request
+is visible in the owner's bookings list with status `vacate_requested`; the bed remains assigned
+until its owner confirms the request, at which point the booking becomes `vacated` and the bed is
+made available. A confirmed booking is required before a user can post a review.
 
 ## Reviews
 

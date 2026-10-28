@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Navigate, Route, Routes, Link } from 'react-router-dom';
 import {
-  BedDouble, Building2, CalendarCheck, Crosshair, ImagePlus, IndianRupee, LayoutDashboard, MessageSquareWarning,
+  BedDouble, Bell, Building2, CalendarCheck, Crosshair, ImagePlus, IndianRupee, LayoutDashboard, MessageSquareWarning,
   Pencil, Plus, Star, Trash2, Users, Utensils, Wallet, X, CheckCircle2, XCircle, LogOut as Vacate,
 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -10,7 +10,7 @@ import { BedLegend, ReviewList } from '../../components/pg';
 import { useAuth } from '../../store/auth';
 import {
   useDB, findUser, findPg, pgStats, pgRating, savePg, deletePg, setBookingStatus, setBedStatus,
-  updateComplaint, recordManualPayment,
+  updateComplaint, recordManualPayment, confirmVacateRequest,
 } from '../../store/db';
 import { AMENITIES, DEFAULT_FOOD_MENU } from '../../data/seed';
 import { compressImage, fmtDate, inr, WEEKDAYS } from '../../utils/format';
@@ -37,7 +37,7 @@ export default function OwnerPortal() {
     { to: '/owner', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/owner/pgs', label: 'My PGs', icon: Building2 },
     { to: '/owner/rooms', label: 'Rooms & Beds', icon: BedDouble },
-    { to: '/owner/bookings', label: 'Bookings', icon: CalendarCheck, badge: bookings.filter((b) => b.status === 'booked').length },
+    { to: '/owner/bookings', label: 'Bookings', icon: CalendarCheck, badge: bookings.filter((b) => ['booked', 'vacate_requested'].includes(b.status)).length },
     { to: '/owner/tenants', label: 'Residents', icon: Users },
     { to: '/owner/payments', label: 'Payments', icon: Wallet },
     { to: '/owner/complaints', label: 'Complaints', icon: MessageSquareWarning, badge: complaints.filter((c) => c.status === 'open').length },
@@ -86,6 +86,7 @@ function Dashboard() {
   const month = new Date().toISOString().slice(0, 7);
   const monthRevenue = payments.filter((p) => p.date.startsWith(month)).reduce((a, p) => a + p.amount, 0);
   const pending = bookings.filter((b) => b.status === 'booked');
+  const vacancyRequests = bookings.filter((b) => b.status === 'vacate_requested');
   const overdue = bookings.filter((b) => b.status === 'allocated' && dueInfo(b.paidUntil).status === 'overdue');
   const occPct = totals.beds ? Math.round(((totals.occ + totals.booked) / totals.beds) * 100) : 0;
 
@@ -98,6 +99,7 @@ function Dashboard() {
         <StatTile label="Available beds" value={totals.free} icon={BedDouble} tone="good" />
         <StatTile label="Revenue this month" value={inr(monthRevenue)} icon={IndianRupee} tone="good" />
         <StatTile label="Pending allocations" value={pending.length} tone="warn" icon={CalendarCheck} />
+        <StatTile label="Vacancy requests" value={vacancyRequests.length} tone="warn" icon={Bell} />
         <StatTile label="Rent overdue" value={overdue.length} tone="bad" icon={Wallet} />
         <StatTile label="Open complaints" value={complaints.filter((c) => c.status !== 'resolved').length} tone="bad" icon={MessageSquareWarning} />
         <StatTile label="Residents" value={bookings.filter((b) => b.status === 'allocated').length} icon={Users} />
@@ -114,6 +116,24 @@ function Dashboard() {
               { label: 'Room/Bed', render: (b) => `${b.roomNo} / ${b.bedNo}` },
               { label: 'Move-in', render: (b) => fmtDate(b.moveInDate) },
               { label: '', render: (b) => <button className="btn-success h-8 px-3 text-xs" onClick={() => { setBookingStatus(b.id, 'allocated'); toast('Bed allocated'); }}>Allocate</button> },
+            ]}
+          />
+        </Card>
+        <Card title="Vacancy requests" actions={<Link to="/owner/bookings" className="text-xs font-semibold text-owner">View all →</Link>} bodyClass="p-0">
+          <Table
+            rows={vacancyRequests}
+            empty="No pending vacancy requests"
+            columns={[
+              { label: 'Resident', render: (b) => findUser(db, b.userId)?.name },
+              { label: 'PG', render: (b) => findPg(db, b.pgId)?.name },
+              { label: 'Room/Bed', render: (b) => `${b.roomNo} / ${b.bedNo}` },
+              { label: '', render: (b) => (
+                <button className="btn-success h-8 px-3 text-xs" onClick={() => {
+                  if (!window.confirm(`Confirm that ${findUser(db, b.userId)?.name} has vacated? This will make bed ${b.bedNo} available for a new resident.`)) return;
+                  confirmVacateRequest(b.id, user.id);
+                  toast('Vacancy confirmed. The bed is now available.');
+                }}>Confirm vacancy</button>
+              ) },
             ]}
           />
         </Card>
@@ -442,7 +462,7 @@ function Rooms() {
 
 // ------------------------------------------------------------------ Bookings
 function Bookings() {
-  const { db, pgs, bookings } = useOwnerData();
+  const { db, pgs, bookings, user } = useOwnerData();
   const [pgId, setPgId] = useState('all');
   const [status, setStatus] = useState('booked');
   const [view, setView] = useState(null);
@@ -455,7 +475,7 @@ function Bookings() {
     <>
       <PageHeader title="Bookings" subtitle="Allocate beds to residents after their booking payment" actions={<PgFilter pgs={pgs} value={pgId} onChange={setPgId} />} />
       <div className="mb-4 flex flex-wrap gap-2">
-        {[['booked', 'Awaiting allocation'], ['allocated', 'Allocated'], ['cancelled', 'Cancelled'], ['vacated', 'Vacated'], ['all', 'All']].map(([k, l]) => (
+        {[['booked', 'Awaiting allocation'], ['vacate_requested', 'Vacate requests'], ['allocated', 'Allocated'], ['cancelled', 'Cancelled'], ['vacated', 'Vacated'], ['all', 'All']].map(([k, l]) => (
           <button key={k} onClick={() => setStatus(k)} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${status === k ? 'border-owner bg-owner text-white' : 'border-border bg-card text-muted-foreground'}`}>
             {l} {k !== 'all' && `(${counts(k)})`}
           </button>
@@ -477,7 +497,13 @@ function Bookings() {
             {
               label: 'Actions',
               render: (b) =>
-                b.status === 'booked' ? (
+                b.status === 'vacate_requested' ? (
+                  <button className="btn-success h-8 px-3 text-xs" onClick={() => {
+                    if (!window.confirm(`Confirm that ${findUser(db, b.userId)?.name} has vacated? This will make the bed available for a new resident.`)) return;
+                    confirmVacateRequest(b.id, user.id);
+                    toast('Vacancy confirmed. The bed is now available.');
+                  }}>Confirm vacancy</button>
+                ) : b.status === 'booked' ? (
                   <div className="flex gap-1.5">
                     <button className="btn-success h-8 px-3 text-xs" onClick={() => { setBookingStatus(b.id, 'allocated'); toast('Bed allocated. Resident dashboard is now unlocked.'); }}><CheckCircle2 className="size-3.5" /> Allocate</button>
                     <button className="btn-outline h-8 px-3 text-xs text-red-600" onClick={() => window.confirm('Cancel this booking and free the bed?') && setBookingStatus(b.id, 'cancelled')}><XCircle className="size-3.5" /> Cancel</button>

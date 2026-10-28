@@ -1,23 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import {
-  BedDouble, CalendarClock, CheckCircle2, Clock, CreditCard, Home, IndianRupee, LayoutDashboard,
+  BedDouble, CalendarClock, CheckCircle2, Clock, CreditCard, Home, IndianRupee, LayoutDashboard, LogOut as Vacate,
   Lock, MessageSquareWarning, Phone, Plus, Star, User, Utensils, Wallet, MapPin,
 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { Card, EmptyState, Modal, PageHeader, StatTile, StatusBadge, Stars, Table, Photo, toast } from '../../components/ui';
 import { FoodMenuTable, ReviewList } from '../../components/pg';
 import { useAuth } from '../../store/auth';
-import { useDB, findPg, findUser, findRoom, payRent, addComplaint, upsertReview, updateUser, pgRating } from '../../store/db';
+import { useDB, findPg, findUser, findRoom, payRent, addComplaint, upsertReview, updateUser, pgRating, requestVacate } from '../../store/db';
 import { daysBetween, fmtDate, inr, todayIso, todayName } from '../../utils/format';
 
-// The resident's current booking: an active one (booked / allocated) if any, else the latest.
+// The resident's current booking: an active one if any, else the latest.
 function useMyBooking() {
   const { user } = useAuth();
   const db = useDB();
   return useMemo(() => {
     const mine = db.bookings.filter((b) => b.userId === user.id && b.status !== 'payment_pending');
-    const booking = mine.find((b) => ['allocated', 'booked'].includes(b.status)) || mine[mine.length - 1] || null;
+    const booking = mine.find((b) => ['allocated', 'booked', 'vacate_requested'].includes(b.status)) || mine[mine.length - 1] || null;
     const pg = booking && findPg(db, booking.pgId);
     const room = booking && findRoom(pg, booking.roomId);
     const payments = booking ? db.payments.filter((p) => p.bookingId === booking.id).sort((a, b) => b.date.localeCompare(a.date)) : [];
@@ -43,7 +43,7 @@ export default function UserPortal() {
     { to: '/user/ratings', label: 'Ratings & Reviews', icon: Star },
     { to: '/user/profile', label: 'My Profile', icon: User },
   ];
-  const allocated = booking?.status === 'allocated';
+  const allocated = ['allocated', 'vacate_requested'].includes(booking?.status);
   return (
     <DashboardLayout role="user" nav={nav}>
       <Routes>
@@ -100,7 +100,7 @@ function Overview() {
   const owner = findUser(db, pg.ownerId);
   const lastPayment = payments[0];
   const due = dueInfo(booking.paidUntil);
-  const allocated = booking.status === 'allocated';
+  const allocated = ['allocated', 'vacate_requested'].includes(booking.status);
   const today = pg.foodMenu?.[todayName()];
 
   if (!allocated) {
@@ -175,8 +175,28 @@ function Overview() {
       <PageHeader
         title={`Hi ${first} 👋`}
         subtitle={`${pg.name} · ${pg.locality}, ${pg.city}`}
-        actions={<button className="btn bg-tenant text-white hover:bg-cyan-600" onClick={() => setPayOpen(true)}><CreditCard className="size-4" /> Pay rent</button>}
+        actions={<div className="flex flex-wrap gap-2">
+          {booking.status === 'allocated' ? (
+            <button
+              className="btn-outline text-red-600"
+              onClick={() => {
+                if (!window.confirm('Send a vacancy request to the PG owner? The bed will remain assigned until the owner confirms you have moved out.')) return;
+                requestVacate(booking.id, user.id);
+                toast('Vacancy request sent to the PG owner');
+              }}
+            ><Vacate className="size-4" /> Vacate</button>
+          ) : (
+            <StatusBadge status="vacate_requested" />
+          )}
+          <button className="btn bg-tenant text-white hover:bg-cyan-600" onClick={() => setPayOpen(true)}><CreditCard className="size-4" /> Pay rent</button>
+        </div>}
       />
+
+      {booking.status === 'vacate_requested' && (
+        <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          Your vacancy request has been sent to the PG owner. The bed will be made available to another resident after the owner confirms you have moved out.
+        </div>
+      )}
 
       {due.status !== 'paid' && (
         <div className={`mb-5 rounded-xl border p-4 text-sm ${due.status === 'overdue' ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200' : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'}`}>

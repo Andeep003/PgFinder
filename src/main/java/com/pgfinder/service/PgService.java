@@ -23,12 +23,13 @@ public class PgService {
 
     /** Search filters, all optional. Mirrors the filters on the Home page. */
     public record SearchFilters(Double lat, Double lng, Double radiusKm, String gender, Integer sharing,
-                                Integer maxRent, String sort) {
+                                Integer maxRent, String sort, String name) {
     }
 
     @Transactional(readOnly = true)
     public List<PgSummary> search(SearchFilters f) {
         boolean hasLocation = f.lat() != null && f.lng() != null;
+        String nameQuery = f.name() == null ? "" : f.name().trim();
 
         Comparator<PgSummary> order = switch (f.sort() == null ? "distance" : f.sort()) {
             case "price" -> Comparator.comparingInt(s -> s.stats().minRent());
@@ -39,11 +40,13 @@ public class PgService {
         };
 
         return pgRepository.findByStatus("approved").stream()
+                .filter(pg -> nameQuery.isEmpty() || pg.getName().toLowerCase().contains(nameQuery.toLowerCase()))
                 .filter(pg -> f.gender() == null || f.gender().equalsIgnoreCase(pg.getGender()))
                 .filter(pg -> f.sharing() == null || hasFreeBedWithSharing(pg, f.sharing()))
                 .map(pg -> PgSummary.from(pg, hasLocation ? round1(distanceKm(f.lat(), f.lng(), pg.getLat(), pg.getLng())) : null))
                 .filter(s -> f.maxRent() == null || s.stats().minRent() <= f.maxRent())
-                .filter(s -> !hasLocation || f.radiusKm() == null || s.distanceKm() <= f.radiusKm())
+                .filter(s -> !hasLocation || !nameQuery.isEmpty() || f.radiusKm() == null
+                        || s.distanceKm() <= f.radiusKm())
                 .sorted(order)
                 .toList();
     }

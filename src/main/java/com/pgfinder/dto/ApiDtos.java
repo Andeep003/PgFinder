@@ -79,13 +79,13 @@ public final class ApiDtos {
 
     public record BookingDto(String id, Long bedId, String bedNo, String roomId, String pgId, String pgName,
                              LocalDate startDate, LocalDate endDate, String status, Instant createdAt,
-                             String guestId, String guestName) {
+                             String guestId, String guestName, Instant vacateRequestedAt) {
         public static BookingDto from(Booking booking) {
             return new BookingDto(booking.getId(), booking.getBed().getId(), booking.getBed().getBedNo(),
                     booking.getBed().getRoom().getId(), booking.getBed().getRoom().getPg().getId(),
                     booking.getBed().getRoom().getPg().getName(), booking.getStartDate(), booking.getEndDate(),
                     booking.getStatus(), booking.getCreatedAt(), booking.getGuest().getId(),
-                    booking.getGuest().getName());
+                    booking.getGuest().getName(), booking.getVacateRequestedAt());
         }
     }
 

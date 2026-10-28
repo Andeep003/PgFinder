@@ -39,6 +39,7 @@ const STATUS_MAP = {
   active: ['success', 'Active'],
   approved: ['success', 'Approved'],
   allocated: ['success', 'Allocated'],
+  vacate_requested: ['warning', 'Vacate requested'],
   resolved: ['success', 'Resolved'],
   success: ['success', 'Paid'],
   available: ['success', 'Available'],

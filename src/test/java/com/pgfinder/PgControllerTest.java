@@ -6,6 +6,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import com.pgfinder.repository.PgRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -20,6 +23,9 @@ class PgControllerTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private PgRepository pgs;
 
     @Test
     void listsOnlyApprovedPgs() throws Exception {
@@ -44,6 +50,22 @@ class PgControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[*].gender", everyItem(is("Girls"))));
+    }
+
+    @Test
+    @Transactional
+    void searchesPgNameCaseInsensitivelyWithoutApplyingLocationRadius() throws Exception {
+        var pg = pgs.findById("pg-1").orElseThrow();
+        pg.setName("Pakka Telangana");
+
+        mvc.perform(get("/api/pgs")
+                        .param("name", "pakka tela")
+                        .param("lat", "12.9716")
+                        .param("lng", "77.5946")
+                        .param("radiusKm", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name").value("Pakka Telangana"));
     }
 
     @Test

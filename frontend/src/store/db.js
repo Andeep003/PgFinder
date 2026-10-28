@@ -138,7 +138,7 @@ export function createBooking({ userId, pgId, roomId, bedNo, moveInDate }) {
     const room = findRoom(pg, roomId);
     const bed = room?.beds.find((b) => b.bedNo === bedNo);
     if (!bed || bed.status !== 'available') throw new Error('Sorry, this bed is no longer available. Please choose another bed.');
-    if (s.bookings.some((b) => b.userId === userId && ['booked', 'allocated'].includes(b.status))) {
+    if (s.bookings.some((b) => b.userId === userId && ['booked', 'allocated', 'vacate_requested'].includes(b.status))) {
       throw new Error('You already have an active booking. Log in to see it on your dashboard.');
     }
     // Drop any earlier unpaid attempt by this user so beds don't stay held.
@@ -208,6 +208,28 @@ export function setBookingStatus(bookingId, status) {
     } else if (['cancelled', 'vacated'].includes(status)) {
       if (bed && bed.bookingId === bk.id) Object.assign(bed, { status: 'available', bookingId: null });
     }
+  });
+}
+
+export function requestVacate(bookingId, userId) {
+  return update((s) => {
+    const booking = s.bookings.find((b) => b.id === bookingId);
+    if (!booking || booking.userId !== userId) throw new Error('You cannot request to vacate this booking.');
+    if (booking.status !== 'allocated') throw new Error('Only an active resident can request to vacate.');
+    booking.status = 'vacate_requested';
+    booking.vacateRequestedAt = new Date().toISOString();
+  });
+}
+
+export function confirmVacateRequest(bookingId, ownerId) {
+  return update((s) => {
+    const booking = s.bookings.find((b) => b.id === bookingId);
+    const pg = booking && findPg(s, booking.pgId);
+    if (!booking || pg?.ownerId !== ownerId) throw new Error('You cannot confirm this vacancy request.');
+    if (booking.status !== 'vacate_requested') throw new Error('This booking has no pending vacancy request.');
+    booking.status = 'vacated';
+    const bed = findRoom(pg, booking.roomId)?.beds.find((candidate) => candidate.bedNo === booking.bedNo);
+    if (bed?.bookingId === booking.id) Object.assign(bed, { status: 'available', bookingId: null });
   });
 }
 

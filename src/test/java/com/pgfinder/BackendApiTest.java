@@ -167,6 +167,40 @@ class BackendApiTest {
     }
 
     @Test
+    void guestVacancyRequestNotifiesOwnerAndBedIsReleasedOnlyAfterConfirmation() throws Exception {
+        String guestToken = login("guest@pgfinder.local");
+        Bed bed = pgs.findById("pg-2").orElseThrow().getRooms().stream()
+                .flatMap(room -> room.getBeds().stream())
+                .filter(candidate -> "bk-1004".equals(candidate.getBookingId()))
+                .findFirst().orElseThrow();
+        String originalBedStatus = bed.getStatus();
+
+        mvc.perform(patch("/api/bookings/bk-1004/vacate-request")
+                        .header("Authorization", bearer(guestToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("vacate_requested"))
+                .andExpect(jsonPath("$.vacateRequestedAt").isNotEmpty());
+
+        mvc.perform(get("/api/owner/bookings")
+                        .header("Authorization", bearer(login("owner1@pgfinder.local"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == 'bk-1004')].status", hasItem("vacate_requested")));
+        org.junit.jupiter.api.Assertions.assertEquals(originalBedStatus, bed.getStatus());
+
+        mvc.perform(patch("/api/owner/bookings/bk-1004/confirm-vacancy")
+                        .header("Authorization", bearer(login("owner2@pgfinder.local"))))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(patch("/api/owner/bookings/bk-1004/confirm-vacancy")
+                        .header("Authorization", bearer(login("owner1@pgfinder.local"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("vacated"));
+
+        org.junit.jupiter.api.Assertions.assertEquals("available", bed.getStatus());
+        org.junit.jupiter.api.Assertions.assertNull(bed.getBookingId());
+    }
+
+    @Test
     void ownersCanUploadAndRemoveLocalImages() throws Exception {
         String ownerToken = login("owner1@pgfinder.local");
         byte[] pngSignature = {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};

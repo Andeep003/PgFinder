@@ -41,6 +41,8 @@ public class Booking {
     @Column(nullable = false)
     private String status = "confirmed";
 
+    private Instant vacateRequestedAt;
+
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 }

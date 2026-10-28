@@ -31,8 +31,9 @@ public class PgController {
                                   @RequestParam(required = false) String gender,
                                   @RequestParam(required = false) Integer sharing,
                                   @RequestParam(required = false) Integer maxRent,
-                                  @RequestParam(required = false) String sort) {
-        return pgService.search(new SearchFilters(lat, lng, radiusKm, gender, sharing, maxRent, sort));
+                                  @RequestParam(required = false) String sort,
+                                  @RequestParam(required = false) String name) {
+        return pgService.search(new SearchFilters(lat, lng, radiusKm, gender, sharing, maxRent, sort, name));
     }
 
     @GetMapping("/{id}")

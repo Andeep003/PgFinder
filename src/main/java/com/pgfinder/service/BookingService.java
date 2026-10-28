@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +54,7 @@ public class BookingService {
         if (!"approved".equals(pg.getStatus())) {
             throw new NotFoundException("PG not found: " + pg.getId());
         }
-        List<Booking> currentBookings = bookings.findByBedIdAndStatusOrderByStartDateAsc(bed.getId(), "confirmed");
+        List<Booking> currentBookings = activeBookingsForBed(bed.getId());
         if ("occupied".equals(bed.getStatus()) || "maintenance".equals(bed.getStatus())
                 || ("booked".equals(bed.getStatus()) && currentBookings.isEmpty())
                 || bookings.existsOverlapping(bed.getId(), request.startDate(), request.endDate())) {
@@ -69,7 +70,7 @@ public class BookingService {
         booking.setEndDate(request.endDate());
         booking.setStatus("confirmed");
         Booking saved = bookings.save(booking);
-        currentBookings = bookings.findByBedIdAndStatusOrderByStartDateAsc(bed.getId(), "confirmed");
+        currentBookings = activeBookingsForBed(bed.getId());
         if (!currentBookings.isEmpty()) {
             bed.setStatus("booked");
             bed.setBookingId(currentBookings.get(0).getId());
@@ -88,6 +89,46 @@ public class BookingService {
     }
 
     @Transactional
+    public BookingDto requestVacate(String guestId, String bookingId) {
+        Booking booking = bookings.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
+        if (!guestId.equals(booking.getGuest().getId())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You cannot request to vacate this booking");
+        }
+        if (!"confirmed".equals(booking.getStatus())) {
+            throw new ApiException(HttpStatus.CONFLICT, "Only an active booking can request to vacate");
+        }
+        booking.setStatus("vacate_requested");
+        booking.setVacateRequestedAt(Instant.now());
+        return BookingDto.from(booking);
+    }
+
+    @Transactional
+    public BookingDto confirmVacate(String ownerId, String bookingId) {
+        Booking booking = bookings.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
+        if (!ownerId.equals(booking.getBed().getRoom().getPg().getOwnerId())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You cannot confirm vacancy for this booking");
+        }
+        if (!"vacate_requested".equals(booking.getStatus())) {
+            throw new ApiException(HttpStatus.CONFLICT, "This booking has no pending vacancy request");
+        }
+        booking.setStatus("vacated");
+        Bed bed = booking.getBed();
+        if (booking.getId().equals(bed.getBookingId())) {
+            List<Booking> remaining = activeBookingsForBed(bed.getId());
+            if (remaining.isEmpty()) {
+                bed.setStatus("available");
+                bed.setBookingId(null);
+            } else {
+                bed.setStatus("booked");
+                bed.setBookingId(remaining.get(0).getId());
+            }
+        }
+        return BookingDto.from(booking);
+    }
+
+    @Transactional
     public BookingDto cancel(String actorId, boolean admin, String bookingId) {
         Booking booking = bookings.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
@@ -101,7 +142,7 @@ public class BookingService {
         booking.setStatus("cancelled");
         Bed bed = booking.getBed();
         if (booking.getId().equals(bed.getBookingId())) {
-            List<Booking> remaining = bookings.findByBedIdAndStatusOrderByStartDateAsc(bed.getId(), "confirmed");
+            List<Booking> remaining = activeBookingsForBed(bed.getId());
             if (remaining.isEmpty()) {
                 bed.setStatus("available");
                 bed.setBookingId(null);
@@ -111,6 +152,11 @@ public class BookingService {
             }
         }
         return BookingDto.from(booking);
+    }
+
+    private List<Booking> activeBookingsForBed(Long bedId) {
+        return bookings.findByBedIdAndStatusInOrderByStartDateAsc(
+                bedId, List.of("confirmed", "vacate_requested"));
     }
 
     @Transactional(readOnly = true)

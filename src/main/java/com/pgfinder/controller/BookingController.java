@@ -57,6 +57,18 @@ public class BookingController {
         return bookingService.ownerBookings(authentication.getName());
     }
 
+    @PatchMapping("/api/bookings/{bookingId}/vacate-request")
+    @PreAuthorize("hasRole('USER')")
+    public BookingDto requestVacate(Authentication authentication, @PathVariable String bookingId) {
+        return bookingService.requestVacate(authentication.getName(), bookingId);
+    }
+
+    @PatchMapping("/api/owner/bookings/{bookingId}/confirm-vacancy")
+    @PreAuthorize("hasRole('OWNER')")
+    public BookingDto confirmVacate(Authentication authentication, @PathVariable String bookingId) {
+        return bookingService.confirmVacate(authentication.getName(), bookingId);
+    }
+
     @PatchMapping("/api/bookings/{bookingId}/cancel")
     @PreAuthorize("hasAnyRole('USER', 'OWNER', 'ADMIN')")
     public BookingDto cancel(Authentication authentication, @PathVariable String bookingId) {
