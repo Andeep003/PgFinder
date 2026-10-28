@@ -54,29 +54,35 @@ public final class PgDtos {
 
     /** One card in the search results (GET /api/pgs). */
     public record PgSummary(String id, String name, String gender, String address, String locality, String city,
-                            double lat, double lng, List<String> amenities, List<String> images,
+                            String googleMapsUrl, double lat, double lng, List<String> amenities, List<String> images,
                             List<Integer> sharingOptions, PgStats stats, Double distanceKm) {
         public static PgSummary from(Pg pg, Double distanceKm) {
             List<Integer> sharing = pg.getRooms().stream().map(Room::getSharing).distinct().sorted().toList();
             return new PgSummary(pg.getId(), pg.getName(), pg.getGender(), pg.getAddress(), pg.getLocality(),
-                    pg.getCity(), pg.getLat(), pg.getLng(), List.copyOf(pg.getAmenities()),
+                    pg.getCity(), mapsUrlFor(pg), pg.getLat(), pg.getLng(), List.copyOf(pg.getAmenities()),
                     PgDtos.images(pg), sharing, PgStats.of(pg), distanceKm);
         }
     }
 
     /** Full PG page with every room and bed (GET /api/pgs/{id}). */
     public record PgDetail(String id, String ownerId, String name, String gender, String address, String locality,
-                           String city, double lat, double lng, String phone, String description,
+                           String city, String googleMapsUrl, double lat, double lng, String phone, String description,
                            List<String> amenities, List<String> rules, List<String> images,
                            Map<String, Map<String, String>> foodMenu, int depositMonths, String status,
                            LocalDate createdAt, List<RoomDto> rooms, PgStats stats) {
         public static PgDetail from(Pg pg) {
             return new PgDetail(pg.getId(), pg.getOwnerId(), pg.getName(), pg.getGender(), pg.getAddress(),
-                    pg.getLocality(), pg.getCity(), pg.getLat(), pg.getLng(), pg.getPhone(), pg.getDescription(),
+                    pg.getLocality(), pg.getCity(), mapsUrlFor(pg), pg.getLat(), pg.getLng(), pg.getPhone(), pg.getDescription(),
                     List.copyOf(pg.getAmenities()), List.copyOf(pg.getRules()), PgDtos.images(pg),
                     pg.getFoodMenu(), pg.getDepositMonths(), pg.getStatus(), pg.getCreatedAt(),
                     pg.getRooms().stream().map(RoomDto::from).toList(), PgStats.of(pg));
         }
+    }
+
+    private static String mapsUrlFor(Pg pg) {
+        return pg.getGoogleMapsUrl() == null || pg.getGoogleMapsUrl().isBlank()
+                ? "https://www.google.com/maps/search/?api=1&query=" + pg.getLat() + "," + pg.getLng()
+                : pg.getGoogleMapsUrl();
     }
 
     private static List<String> images(Pg pg) {

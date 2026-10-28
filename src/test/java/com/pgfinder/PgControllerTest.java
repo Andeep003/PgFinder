@@ -70,9 +70,14 @@ class PgControllerTest {
 
     @Test
     void returnsPgWithRoomsAndBeds() throws Exception {
+        mvc.perform(get("/api/pgs").param("name", "Sri Sai Comfort PG"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].googleMapsUrl", containsString("https://www.google.com/maps/search/?api=1&query=")));
+
         mvc.perform(get("/api/pgs/pg-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Sri Sai Comfort PG"))
+                .andExpect(jsonPath("$.googleMapsUrl", containsString("https://www.google.com/maps/search/?api=1&query=")))
                 .andExpect(jsonPath("$.rooms", hasSize(9)))
                 .andExpect(jsonPath("$.stats.totalBeds").value(24))
                 .andExpect(jsonPath("$.foodMenu.Monday.breakfast").value("Idli, Sambar, Chutney"));

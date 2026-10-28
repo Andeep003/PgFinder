@@ -146,21 +146,21 @@ export default function Home() {
   const results = useMemo(() => {
     if (!center) return [];
     const localListings = db.pgs.filter((pg) => isPgPublic(db, pg));
-    const listings = nameQuery
-      ? [...new Map([...(apiPgs ?? []), ...localListings].map((pg) => [pg.id, pg])).values()]
-      : apiPgs ?? localListings;
+    const apiIds = new Set((apiPgs ?? []).map((pg) => pg.id));
+    const listings = [...new Map([...localListings, ...(apiPgs ?? [])].map((pg) => [pg.id, pg])).values()];
     return listings
       .map((pg) => ({
         pg,
         stats: pg.stats ?? pgStats(pg),
         rating: pgRating(db, pg.id),
         distance: pg.distanceKm ?? distanceKm(center, pg),
+        localOnly: !apiIds.has(pg.id),
       }))
       .filter((r) => !nameQuery || r.pg.name.toLowerCase().includes(nameQuery.toLowerCase()))
-      .filter((r) => apiPgs || nameQuery || radius === 'any' || r.distance <= radius)
-      .filter((r) => apiPgs || gender === 'All' || r.pg.gender === gender)
-      .filter((r) => apiPgs || r.stats.minRent <= budget)
-      .filter((r) => apiPgs || sharing === 'Any' || r.pg.rooms.some((room) => room.sharing === Number(sharing) && room.beds.some((b) => b.status === 'available')))
+      .filter((r) => !r.localOnly || nameQuery || radius === 'any' || r.distance <= radius)
+      .filter((r) => !r.localOnly || gender === 'All' || r.pg.gender === gender)
+      .filter((r) => !r.localOnly || r.stats.minRent <= budget)
+      .filter((r) => !r.localOnly || sharing === 'Any' || r.pg.rooms.some((room) => room.sharing === Number(sharing) && room.beds.some((b) => b.status === 'available')))
       .sort((a, b) =>
         sort === 'price' ? a.stats.minRent - b.stats.minRent : sort === 'rating' ? b.rating.avg - a.rating.avg : a.distance - b.distance,
       );

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -180,11 +181,13 @@ public class OwnerPgService {
         if (!List.of("Boys", "Girls", "Co-living").contains(request.gender().trim())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Gender must be Boys, Girls, or Co-living");
         }
+        validateGoogleMapsUrl(request.googleMapsUrl());
         pg.setName(request.name().trim());
         pg.setGender(request.gender().trim());
         pg.setAddress(request.address().trim());
         pg.setLocality(request.locality().trim());
         pg.setCity(request.city().trim());
+        pg.setGoogleMapsUrl(request.googleMapsUrl().trim());
         pg.setLat(request.lat());
         pg.setLng(request.lng());
         pg.setPhone(request.phone().trim());
@@ -194,6 +197,22 @@ public class OwnerPgService {
         pg.setImages(request.images() == null ? new ArrayList<>() : new ArrayList<>(request.images()));
         pg.setFoodMenu(request.foodMenu() == null ? Map.of() : request.foodMenu());
         pg.setDepositMonths(request.depositMonths());
+    }
+
+    private static void validateGoogleMapsUrl(String value) {
+        try {
+            URI uri = URI.create(value.trim());
+            String host = uri.getHost();
+            String path = uri.getPath();
+            boolean supportedLink = "maps.app.goo.gl".equals(host) || "maps.google.com".equals(host)
+                    || ("goo.gl".equals(host) || "google.com".equals(host) || "www.google.com".equals(host))
+                    && path != null && path.startsWith("/maps");
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getUserInfo() != null || !supportedLink) {
+                throw new IllegalArgumentException();
+            }
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Google Maps link must be a valid HTTPS Google Maps URL");
+        }
     }
 
     private static void apply(Room room, RoomWriteRequest request) {

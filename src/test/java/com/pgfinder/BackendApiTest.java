@@ -72,6 +72,7 @@ class BackendApiTest {
                   "address":"1 Sample Road",
                   "locality":"Madhapur",
                   "city":"Hyderabad",
+                  "googleMapsUrl":"https://www.google.com/maps/search/?api=1&query=17.4486,78.3908",
                   "lat":17.4486,
                   "lng":78.3908,
                   "phone":"+919999999999",
@@ -90,7 +91,15 @@ class BackendApiTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.ownerId").value("u-owner1"))
-                .andExpect(jsonPath("$.status").value("pending"));
+                .andExpect(jsonPath("$.status").value("pending"))
+                .andExpect(jsonPath("$.googleMapsUrl").value("https://www.google.com/maps/search/?api=1&query=17.4486,78.3908"));
+
+        mvc.perform(post("/api/owner/pgs")
+                        .header("Authorization", bearer(ownerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.replace("https://www.google.com/maps/search/?api=1&query=17.4486,78.3908",
+                                "https://example.com/maps/17.4486,78.3908")))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

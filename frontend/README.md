@@ -36,6 +36,7 @@ falls back to its local sample listings.
 1. **Home**: asks for your location and lists PGs near you (falls back to Madhapur, Hyderabad).
    Search any area (demo localities resolve offline; others go through OpenStreetMap). Filter by
    gender, sharing, distance and budget, and switch between list and map views.
+   Approved PG listings include a **View location on Google Maps** link in search results.
 2. **PG details**: photos uploaded by the owner, amenities, food menu, reviews, and every room with
    its bed availability. Pick a free bed and choose **Book this slot**.
 3. **Register**: resident details plus a login password ("Fill sample data" fills it in), and a move-in date.
@@ -44,6 +45,10 @@ falls back to its local sample listings.
 6. **Owner** logs in, opens Bookings and selects **Allocate**.
 7. **Resident** logs in again and sees the full dashboard: room/bed number, fees, last payment and date,
    next due date, pay rent, food menu, complaints and ratings.
+
+When adding a PG, the owner must provide its Google Maps share link and map coordinates. Links
+containing coordinates fill the latitude/longitude automatically; approved listings show the link
+in public search results and on the PG details page.
 
 ## Structure
 
