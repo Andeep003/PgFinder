@@ -54,7 +54,9 @@ export default function Payment() {
 
   const pg = findPg(db, booking.pgId);
   const resident = findUser(db, booking.userId);
-  const total = booking.rent + booking.deposit;
+  const initialRent = booking.initialRent ?? booking.rent;
+  const bookingPeriod = booking.durationType === 'day' ? `${booking.durationDays} days` : '1 month';
+  const total = initialRent + booking.deposit;
 
   const pay = (e) => {
     e.preventDefault();
@@ -88,6 +90,7 @@ export default function Payment() {
               <Row k="PG" v={pg.name} />
               <Row k="Room / Bed" v={`Room ${booking.roomNo} · Bed ${booking.bedNo}`} />
               <Row k="Move-in date" v={fmtDate(booking.moveInDate)} />
+              <Row k="Booking duration" v={bookingPeriod} />
               <Row k="Amount paid" v={inr(r?.amount ?? total)} />
               <Row k="Paid via" v={r?.method} />
               <Row k="Login email" v={resident?.email} />
@@ -181,7 +184,7 @@ export default function Payment() {
               <Row k="PG" v={pg.name} />
               <Row k="Room / Bed" v={`${booking.roomNo} / ${booking.bedNo}`} />
               <Row k="Move-in" v={fmtDate(booking.moveInDate)} />
-              <Row k="1st month rent" v={inr(booking.rent)} />
+              <Row k={`Rent (${bookingPeriod})`} v={inr(initialRent)} />
               <Row k="Security deposit" v={inr(booking.deposit)} />
               <div className="flex justify-between border-t border-border pt-2 text-base font-bold text-foreground">
                 <span>Total</span>

@@ -83,6 +83,7 @@ export function RoomCard({ room, selected, onSelectBed, compact }) {
         </div>
         <div className="text-right">
           <div className="text-sm font-semibold text-foreground">{inr(room.rentPerBed)}<span className="text-xs font-normal text-muted-foreground">/bed/mo</span></div>
+          {room.dailyRentPerBed > 0 && <div className="text-xs text-muted-foreground">{inr(room.dailyRentPerBed)}/bed/day</div>}
           <div className={`text-xs font-medium ${free ? 'text-emerald-600' : 'text-red-500'}`}>{free ? `${free} of ${room.beds.length} beds free` : 'Full'}</div>
         </div>
       </div>

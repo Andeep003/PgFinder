@@ -132,12 +132,23 @@ export function updateUser(id, patch) {
 }
 
 /** Creates a booking in `payment_pending` and holds the bed until payment completes. */
-export function createBooking({ userId, pgId, roomId, bedNo, moveInDate }) {
+export function calculatePeriodRent(monthlyRent, durationType, durationDays, dailyRent) {
+  return durationType === 'day' ? dailyRent * durationDays : monthlyRent;
+}
+
+export function createBooking({ userId, pgId, roomId, bedNo, moveInDate, durationType = 'month', durationDays = 30 }) {
   return update((s) => {
     const pg = findPg(s, pgId);
     const room = findRoom(pg, roomId);
     const bed = room?.beds.find((b) => b.bedNo === bedNo);
     if (!bed || bed.status !== 'available') throw new Error('Sorry, this bed is no longer available. Please choose another bed.');
+    if (!['day', 'month'].includes(durationType)) throw new Error('Please choose a valid booking duration.');
+    if (durationType === 'day' && (!Number.isSafeInteger(durationDays) || durationDays < 1)) {
+      throw new Error('Please enter a valid number of days.');
+    }
+    if (durationType === 'day' && (!Number.isSafeInteger(room.dailyRentPerBed) || room.dailyRentPerBed < 1)) {
+      throw new Error('Daily rent is not set for this room. Please contact the PG owner.');
+    }
     if (s.bookings.some((b) => b.userId === userId && ['booked', 'allocated', 'vacate_requested'].includes(b.status))) {
       throw new Error('You already have an active booking. Log in to see it on your dashboard.');
     }
@@ -151,7 +162,11 @@ export function createBooking({ userId, pgId, roomId, bedNo, moveInDate }) {
       roomNo: room.roomNo,
       bedNo,
       rent: room.rentPerBed,
-      deposit: room.rentPerBed * (pg.depositMonths || 1),
+      dailyRent: room.dailyRentPerBed || null,
+      initialRent: calculatePeriodRent(room.rentPerBed, durationType, durationDays, room.dailyRentPerBed),
+      durationType,
+      durationDays: durationType === 'day' ? durationDays : 30,
+      deposit: durationType === 'day' ? 0 : room.rentPerBed * (pg.depositMonths || 1),
       status: 'payment_pending',
       bookedOn: today(),
       moveInDate,
@@ -172,10 +187,11 @@ export function completeBookingPayment(bookingId, method) {
     bed.status = 'booked';
     bed.bookingId = bk.id;
     bk.status = 'booked';
-    bk.paidUntil = addDays(bk.moveInDate, 30);
+    bk.paidUntil = addDays(bk.moveInDate, bk.durationDays || 30);
     const payment = {
       id: uid('pay'), bookingId: bk.id, userId: bk.userId, pgId: bk.pgId,
-      amount: bk.rent + bk.deposit, type: 'Booking (Deposit + 1st month)', method,
+      amount: (bk.initialRent ?? bk.rent) + bk.deposit,
+      type: `Booking (Deposit + ${bk.durationType === 'day' ? `${bk.durationDays} days` : '1 month'})`, method,
       txnId: `TXN${Math.floor(Math.random() * 1e10)}`, date: today(), status: 'success',
     };
     s.payments.push(payment);

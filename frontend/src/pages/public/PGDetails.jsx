@@ -150,6 +150,7 @@ export default function PGDetails() {
                     <div className="mt-1 font-semibold text-foreground">Room {selRoom.roomNo} · Bed {selected.bedNo}</div>
                     <div className="text-xs text-muted-foreground">{selRoom.type}{selRoom.ac ? ' · AC' : ''}</div>
                     <div className="mt-1 font-semibold text-foreground">{inr(selRoom.rentPerBed)}/month</div>
+                    {selRoom.dailyRentPerBed > 0 && <div className="text-xs text-muted-foreground">{inr(selRoom.dailyRentPerBed)}/day</div>}
                   </>
                 ) : (
                   <span className="text-muted-foreground">No bed selected yet. Pick a green bed from the rooms list.</span>
@@ -177,6 +178,7 @@ export default function PGDetails() {
             <div className="text-sm">
               <div className="font-semibold text-foreground">Room {selRoom?.roomNo} · Bed {selected.bedNo}</div>
               <div className="text-xs text-muted-foreground">{inr(selRoom?.rentPerBed)}/month</div>
+              {selRoom?.dailyRentPerBed > 0 && <div className="text-xs text-muted-foreground">{inr(selRoom.dailyRentPerBed)}/day</div>}
             </div>
             <button className="btn-primary" onClick={bookSlot}>Book this slot</button>
           </div>

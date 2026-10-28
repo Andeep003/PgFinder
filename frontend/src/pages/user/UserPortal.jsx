@@ -137,6 +137,7 @@ function Overview() {
                 <Info k="Room type" v={`${room?.type}${room?.ac ? ' · AC' : ''}`} />
                 <Info k="Booked on" v={fmtDate(booking.bookedOn)} />
                 <Info k="Move-in date" v={fmtDate(booking.moveInDate)} />
+                <Info k="Booking period" v={booking.durationType === 'day' ? `${booking.durationDays} days` : 'Monthly'} />
                 <Info k="Monthly rent" v={inr(booking.rent)} />
                 <Info k="Amount paid" v={inr(lastPayment?.amount)} />
               </dl>

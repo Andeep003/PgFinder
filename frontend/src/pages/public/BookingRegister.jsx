@@ -4,7 +4,7 @@ import { ArrowLeft, BedDouble, Sparkles, UserPlus, Lock } from 'lucide-react';
 import PublicNavbar from '../../components/PublicNavbar';
 import { BedLegend, RoomCard } from '../../components/pg';
 import { Card, EmptyState, Modal, Photo, toast } from '../../components/ui';
-import { useDB, findPg, findRoom, registerUser, createBooking } from '../../store/db';
+import { useDB, findPg, findRoom, registerUser, createBooking, calculatePeriodRent } from '../../store/db';
 import { useAuth } from '../../store/auth';
 import { inr } from '../../utils/format';
 import { isoDaysFromNow } from '../../data/seed';
@@ -39,6 +39,8 @@ export default function BookingRegister() {
   const [sel, setSel] = useState({ roomId: params.get('room'), bedNo: params.get('bed') });
   const [picker, setPicker] = useState(false);
   const [moveIn, setMoveIn] = useState(isoDaysFromNow(3));
+  const [durationType, setDurationType] = useState('month');
+  const [durationDays, setDurationDays] = useState('1');
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState(() => (user && user.role === 'user' ? { ...EMPTY, ...user, confirm: '' } : EMPTY));
@@ -65,6 +67,14 @@ export default function BookingRegister() {
     try {
       if (!room || !bed) throw new Error('Please select a bed.');
       if (bed.status !== 'available') throw new Error('This bed is no longer available. Please pick another.');
+      if (durationType === 'day') {
+        if (!Number.isSafeInteger(Number(durationDays)) || Number(durationDays) < 1) {
+          throw new Error('Please enter a valid number of days.');
+        }
+        if (!Number.isSafeInteger(room.dailyRentPerBed) || room.dailyRentPerBed < 1) {
+          throw new Error('Daily rent is not set for this room. Please contact the PG owner.');
+        }
+      }
       if (!agree) throw new Error('Please accept the house rules and terms.');
       let userId = user?.id;
       if (!loggedInTenant) {
@@ -75,7 +85,10 @@ export default function BookingRegister() {
         userId = registerUser({ ...data, role: 'user' }).id;
         toast('Account created. Complete payment to confirm your bed.');
       }
-      const booking = createBooking({ userId, pgId: pg.id, roomId: room.id, bedNo: bed.bedNo, moveInDate: moveIn });
+      const booking = createBooking({
+        userId, pgId: pg.id, roomId: room.id, bedNo: bed.bedNo, moveInDate: moveIn,
+        durationType, durationDays: durationType === 'day' ? Number(durationDays) : 30,
+      });
       navigate(`/payment/${booking.id}`);
     } catch (err) {
       setError(err.message);
@@ -186,11 +199,39 @@ export default function BookingRegister() {
                   <input type="date" className="input" min={isoDaysFromNow(0)} value={moveIn} onChange={(e) => setMoveIn(e.target.value)} required />
                 </div>
 
+                <div className="mt-4">
+                  <label className="label">Booking duration</label>
+                  <select className="input" value={durationType} onChange={(e) => setDurationType(e.target.value)}>
+                    <option value="day">Day-wise</option>
+                    <option value="month">Monthly</option>
+                  </select>
+                </div>
+
+                {durationType === 'day' && (
+                  <div className="mt-4">
+                    <label className="label" htmlFor="booking-days">Number of days</label>
+                    <input
+                      id="booking-days"
+                      type="number"
+                      className="input"
+                      min="1"
+                      step="1"
+                      value={durationDays}
+                      onChange={(e) => setDurationDays(e.target.value)}
+                      required
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {room?.dailyRentPerBed ? `Daily rate: ${inr(room.dailyRentPerBed)}.` : 'Daily rate has not been set by the PG owner.'}
+                    </p>
+                  </div>
+                )}
+
                 {room && (
                   <dl className="mt-4 space-y-2 text-sm">
                     <div className="flex justify-between"><dt className="text-muted-foreground">Monthly rent</dt><dd className="font-medium text-foreground">{inr(room.rentPerBed)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-muted-foreground">Security deposit (refundable)</dt><dd className="font-medium text-foreground">{inr(room.rentPerBed * pg.depositMonths)}</dd></div>
-                    <div className="flex justify-between border-t border-border pt-2 text-base"><dt className="font-semibold text-foreground">Pay now</dt><dd className="font-bold text-foreground">{inr(room.rentPerBed * (1 + pg.depositMonths))}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted-foreground">{durationType === 'day' ? `Rent (${durationDays || 0} days)` : 'Rent (1 month)'}</dt><dd className="font-medium text-foreground">{inr(calculatePeriodRent(room.rentPerBed, durationType, Number(durationDays), room.dailyRentPerBed))}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted-foreground">Security deposit (refundable)</dt><dd className="font-medium text-foreground">{inr(durationType === 'day' ? 0 : room.rentPerBed * pg.depositMonths)}</dd></div>
+                    <div className="flex justify-between border-t border-border pt-2 text-base"><dt className="font-semibold text-foreground">Pay now</dt><dd className="font-bold text-foreground">{inr(calculatePeriodRent(room.rentPerBed, durationType, Number(durationDays), room.dailyRentPerBed) + (durationType === 'day' ? 0 : room.rentPerBed * pg.depositMonths))}</dd></div>
                   </dl>
                 )}
 

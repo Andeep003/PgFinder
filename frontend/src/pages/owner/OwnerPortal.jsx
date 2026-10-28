@@ -359,7 +359,9 @@ function Rooms() {
     const prevBeds = existing >= 0 ? rooms[existing].beds : [];
     const beds = ['A', 'B', 'C', 'D'].slice(0, sharing).map((bedNo) => prevBeds.find((b) => b.bedNo === bedNo) || { bedNo, status: 'available', bookingId: null });
     if (prevBeds.slice(sharing).some((b) => b.status !== 'available')) return toast('Cannot remove beds that are booked/occupied', 'error');
-    const room = { id: f.id || `room-${pg.id}-${f.roomNo}-${Date.now().toString(36)}`, roomNo: f.roomNo, floor: Number(f.floor), sharing, type: types[sharing], ac: f.ac, attachedBathroom: f.attachedBathroom, rentPerBed: Number(f.rentPerBed), beds };
+    const dailyRentPerBed = Number(f.dailyRentPerBed);
+    if (!Number.isSafeInteger(dailyRentPerBed) || dailyRentPerBed < 1) return toast('Enter a valid daily rent per bed', 'error');
+    const room = { id: f.id || `room-${pg.id}-${f.roomNo}-${Date.now().toString(36)}`, roomNo: f.roomNo, floor: Number(f.floor), sharing, type: types[sharing], ac: f.ac, attachedBathroom: f.attachedBathroom, rentPerBed: Number(f.rentPerBed), dailyRentPerBed, beds };
     if (existing >= 0) rooms[existing] = room;
     else rooms.push(room);
     savePg({ ...pg, rooms });
@@ -378,7 +380,7 @@ function Rooms() {
       <PageHeader
         title="Rooms & Beds"
         subtitle="Manage rooms, rent and bed availability"
-        actions={<><PgFilter pgs={pgs} value={pg.id} onChange={setPgId} allowAll={false} /><button className={ownerBtn} onClick={() => setRoomForm({ roomNo: '', floor: 1, sharing: 2, ac: false, attachedBathroom: true, rentPerBed: 8000 })}><Plus className="size-4" /> Add room</button></>}
+        actions={<><PgFilter pgs={pgs} value={pg.id} onChange={setPgId} allowAll={false} /><button className={ownerBtn} onClick={() => setRoomForm({ roomNo: '', floor: 1, sharing: 2, ac: false, attachedBathroom: true, rentPerBed: 8000, dailyRentPerBed: '' })}><Plus className="size-4" /> Add room</button></>}
       />
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label="Total beds" value={s.totalBeds} />
@@ -393,7 +395,7 @@ function Rooms() {
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-semibold text-foreground">Room {room.roomNo}</div>
-                <div className="text-xs text-muted-foreground">Floor {room.floor} · {room.type}{room.ac ? ' · AC' : ''} · {inr(room.rentPerBed)}/bed</div>
+                <div className="text-xs text-muted-foreground">Floor {room.floor} · {room.type}{room.ac ? ' · AC' : ''} · {inr(room.rentPerBed)}/bed/month · {room.dailyRentPerBed ? `${inr(room.dailyRentPerBed)}/bed/day` : 'Daily rate not set'}</div>
               </div>
               <div className="flex gap-1">
                 <button className="rounded p-1.5 text-muted-foreground hover:bg-muted" onClick={() => setRoomForm({ ...room })}><Pencil className="size-3.5" /></button>
@@ -430,6 +432,7 @@ function Rooms() {
               </select>
             </div>
             <div><label className="label">Rent per bed (₹)</label><input type="number" className="input" value={roomForm.rentPerBed} onChange={(e) => setRoomForm({ ...roomForm, rentPerBed: e.target.value })} required /></div>
+            <div><label className="label">Daily rent per bed (₹)</label><input type="number" min="1" step="1" className="input" value={roomForm.dailyRentPerBed ?? ''} onChange={(e) => setRoomForm({ ...roomForm, dailyRentPerBed: e.target.value })} required /></div>
             <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={roomForm.ac} onChange={(e) => setRoomForm({ ...roomForm, ac: e.target.checked })} /> AC</label>
             <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={roomForm.attachedBathroom} onChange={(e) => setRoomForm({ ...roomForm, attachedBathroom: e.target.checked })} /> Attached bathroom</label>
           </form>
@@ -528,7 +531,8 @@ function ResidentModal({ booking, onClose }) {
     ['Name', u?.name], ['Email', u?.email], ['Phone', u?.phone], ['Gender', u?.gender], ['DOB', fmtDate(u?.dob)],
     ['Occupation', `${u?.occupation || ''}${u?.company ? ` · ${u.company}` : ''}`], ['ID proof', `${u?.idType} · ${u?.idNumber}`], ['Address', u?.address],
     ['Emergency contact', `${u?.emergencyName} · ${u?.emergencyPhone}`], ['PG', findPg(db, booking.pgId)?.name], ['Room / Bed', `${booking.roomNo} / ${booking.bedNo}`],
-    ['Move-in', fmtDate(booking.moveInDate)], ['Rent / Deposit', `${inr(booking.rent)} / ${inr(booking.deposit)}`], ['Paid until', fmtDate(booking.paidUntil)],
+    ['Move-in', fmtDate(booking.moveInDate)], ['Booking period', booking.durationType === 'day' ? `${booking.durationDays} days` : 'Monthly'],
+    ['Rent / Deposit', `${inr(booking.initialRent ?? booking.rent)} / ${inr(booking.deposit)}`], ['Paid until', fmtDate(booking.paidUntil)],
     ['Total paid', inr(pays.reduce((a, p) => a + p.amount, 0))],
   ];
   return (
