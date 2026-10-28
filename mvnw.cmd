@@ -40,6 +40,11 @@
 @SET __MVNW_ARG0_NAME__=
 @SET MVNW_USERNAME=
 @SET MVNW_PASSWORD=
+@SET "MVNW_START_FRONTEND="
+@FOR %%A IN (%*) DO @IF "%%~A"=="spring-boot:run" SET "MVNW_START_FRONTEND=1"
+@IF "%MVNW_START_FRONTEND%"=="1" (
+  @start "PgFinder Frontend" /D "%~dp0frontend" cmd /k start-dev.cmd
+)
 @IF NOT "%__MVNW_CMD__%"=="" ("%__MVNW_CMD__%" %*)
 @echo Cannot start maven from wrapper >&2 && exit /b 1
 @GOTO :EOF

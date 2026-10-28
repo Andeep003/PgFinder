@@ -11,7 +11,10 @@ Start with H2 (no MySQL required):
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
-The API listens on `http://localhost:8080`. H2 data is recreated each time the app restarts.
+On Windows, this command starts the frontend dev server in a separate terminal window as well as
+the API. Open `http://localhost:3000` for the UI and `http://localhost:8080` for the API. Run
+it with Node.js/npm installed; frontend dependencies are installed automatically the first time if
+needed. H2 data is recreated each time the app restarts.
 The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 `jdbc:h2:mem:pgfinder`.
 
