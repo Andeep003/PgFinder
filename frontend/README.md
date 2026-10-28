@@ -12,11 +12,9 @@ npm install
 npm start         # React development server at http://localhost:3000
 ```
 
-Start the backend separately from the repository root with its dev profile:
-
-```powershell
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
-```
+On Windows, running `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"` from the
+repository root starts this frontend in a separate terminal window along with the backend. If
+needed, the frontend dependencies are installed automatically on first launch.
 
 The frontend calls `http://localhost:8080` by default. Override the API origin with
 `REACT_APP_API_URL` if the backend is hosted elsewhere. If the API is unavailable, the search page
