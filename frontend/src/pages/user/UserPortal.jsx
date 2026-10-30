@@ -86,6 +86,8 @@ function Locked() {
 function Overview() {
   const { user, booking, pg, room, payments, complaints, db } = useMyBooking();
   const [payOpen, setPayOpen] = useState(false);
+  const [vacateOpen, setVacateOpen] = useState(false);
+  const [vacateDate, setVacateDate] = useState(todayIso());
   const first = user.name.split(' ')[0];
 
   if (!booking) {
@@ -180,11 +182,7 @@ function Overview() {
           {booking.status === 'allocated' ? (
             <button
               className="btn-outline text-red-600"
-              onClick={() => {
-                if (!window.confirm('Send a vacancy request to the PG owner? The bed will remain assigned until the owner confirms you have moved out.')) return;
-                requestVacate(booking.id, user.id);
-                toast('Vacancy request sent to the PG owner');
-              }}
+              onClick={() => { setVacateDate(todayIso()); setVacateOpen(true); }}
             ><Vacate className="size-4" /> Vacate</button>
           ) : (
             <StatusBadge status="vacate_requested" />
@@ -195,9 +193,43 @@ function Overview() {
 
       {booking.status === 'vacate_requested' && (
         <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          Your vacancy request has been sent to the PG owner. The bed will be made available to another resident after the owner confirms you have moved out.
+          Your vacancy request for <b>{fmtDate(booking.vacateDate)}</b> has been sent to the PG owner. The bed will be made available to another resident after the owner confirms you have moved out.
         </div>
       )}
+
+      <Modal
+        open={vacateOpen}
+        title="Request to vacate"
+        onClose={() => setVacateOpen(false)}
+        footer={
+          <>
+            <button className="btn-outline" onClick={() => setVacateOpen(false)}>Cancel</button>
+            <button
+              className="btn-primary"
+              disabled={!vacateDate || vacateDate < todayIso()}
+              onClick={() => {
+                requestVacate(booking.id, user.id, vacateDate);
+                setVacateOpen(false);
+                toast('Vacancy request sent to the PG owner');
+              }}
+            >Send request</button>
+          </>
+        }
+      >
+        <div className="space-y-2">
+          <label className="label" htmlFor="vacate-date">Planned vacate date</label>
+          <input
+            id="vacate-date"
+            type="date"
+            className="input"
+            value={vacateDate}
+            min={todayIso()}
+            onChange={(event) => setVacateDate(event.target.value)}
+            required
+          />
+          <p className="text-xs text-muted-foreground">The PG owner will be notified of this date. Your bed remains assigned until they confirm your move-out.</p>
+        </div>
+      </Modal>
 
       {due.status !== 'paid' && (
         <div className={`mb-5 rounded-xl border p-4 text-sm ${due.status === 'overdue' ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200' : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'}`}>

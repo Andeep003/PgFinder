@@ -30,10 +30,10 @@ export default function DashboardLayout({ role, nav, children }) {
 
   return (
     <div className="min-h-screen bg-background">
-      {mobileOpen && <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
+      {mobileOpen && <div className="backdrop-enter fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
       <div className="flex min-h-screen">
         <aside
-          className={`fixed inset-y-0 left-0 z-50 flex flex-col text-white transition-all lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${t.aside} ${
+          className={`fixed inset-y-0 left-0 z-50 flex flex-col text-white transition-all duration-300 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${t.aside} ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           } ${collapsed ? 'w-16' : 'w-60'}`}
         >
@@ -58,7 +58,7 @@ export default function DashboardLayout({ role, nav, children }) {
                 title={label}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive ? t.active : `${t.muted} ${t.hover} hover:text-white`
                   }`
                 }
@@ -106,7 +106,7 @@ export default function DashboardLayout({ role, nav, children }) {
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+                  <div className="menu-enter absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
                     <div className="border-b border-border px-3 py-2.5">
                       <div className="truncate text-sm font-medium text-foreground">{user?.name}</div>
                       <div className="truncate text-xs text-muted-foreground">{user?.email}</div>

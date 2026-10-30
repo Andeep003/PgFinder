@@ -11,7 +11,7 @@ const TONE_BAR = {
 
 export function StatTile({ label, value, hint, icon: Icon, tone = 'default' }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
+    <div className="card relative overflow-hidden">
       <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${TONE_BAR[tone] || TONE_BAR.default}`} />
       <div className="flex items-start justify-between gap-2 px-4 py-3.5">
         <div className="min-w-0">
@@ -94,9 +94,9 @@ export function Modal({ open, title, onClose, children, footer, wide }) {
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="backdrop-enter fixed inset-0 z-[1000] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
       <div
-        className={`flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-lg sm:rounded-2xl ${wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'}`}
+        className={`modal-enter flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-lg sm:rounded-2xl ${wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -155,7 +155,7 @@ export function Photo({ src, alt, className = '' }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
     return (
-      <div className={`flex items-center justify-center bg-gradient-to-br from-blue-100 to-violet-100 text-slate-400 dark:from-slate-700 dark:to-slate-800 ${className}`}>
+      <div className={`flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50 text-slate-400 dark:from-slate-700 dark:to-slate-800 ${className}`}>
         <ImageOff className="size-8" />
       </div>
     );

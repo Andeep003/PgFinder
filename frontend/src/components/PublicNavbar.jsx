@@ -11,8 +11,8 @@ export default function PublicNavbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-card/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">PG</span>
+        <Link to="/" className="group flex items-center gap-2">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white shadow-sm transition duration-200 group-hover:scale-105">PG</span>
           <span className="text-base font-semibold text-foreground">PG Finder</span>
         </Link>
         <div className="flex items-center gap-2">
