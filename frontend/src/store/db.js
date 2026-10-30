@@ -227,12 +227,14 @@ export function setBookingStatus(bookingId, status) {
   });
 }
 
-export function requestVacate(bookingId, userId) {
+export function requestVacate(bookingId, userId, vacateDate) {
   return update((s) => {
     const booking = s.bookings.find((b) => b.id === bookingId);
     if (!booking || booking.userId !== userId) throw new Error('You cannot request to vacate this booking.');
     if (booking.status !== 'allocated') throw new Error('Only an active resident can request to vacate.');
+    if (!vacateDate || vacateDate < today()) throw new Error('Please choose a valid vacate date.');
     booking.status = 'vacate_requested';
+    booking.vacateDate = vacateDate;
     booking.vacateRequestedAt = new Date().toISOString();
   });
 }

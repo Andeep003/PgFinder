@@ -178,6 +178,7 @@ class BackendApiTest {
     @Test
     void guestVacancyRequestNotifiesOwnerAndBedIsReleasedOnlyAfterConfirmation() throws Exception {
         String guestToken = login("guest@pgfinder.local");
+        LocalDate vacateDate = LocalDate.now().plusDays(5);
         Bed bed = pgs.findById("pg-2").orElseThrow().getRooms().stream()
                 .flatMap(room -> room.getBeds().stream())
                 .filter(candidate -> "bk-1004".equals(candidate.getBookingId()))
@@ -185,15 +186,19 @@ class BackendApiTest {
         String originalBedStatus = bed.getStatus();
 
         mvc.perform(patch("/api/bookings/bk-1004/vacate-request")
-                        .header("Authorization", bearer(guestToken)))
+                        .header("Authorization", bearer(guestToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of("vacateDate", vacateDate))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("vacate_requested"))
-                .andExpect(jsonPath("$.vacateRequestedAt").isNotEmpty());
+                .andExpect(jsonPath("$.vacateRequestedAt").isNotEmpty())
+                .andExpect(jsonPath("$.vacateDate").value(vacateDate.toString()));
 
         mvc.perform(get("/api/owner/bookings")
                         .header("Authorization", bearer(login("owner1@pgfinder.local"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id == 'bk-1004')].status", hasItem("vacate_requested")));
+                .andExpect(jsonPath("$[?(@.id == 'bk-1004')].status", hasItem("vacate_requested")))
+                .andExpect(jsonPath("$[?(@.id == 'bk-1004')].vacateDate", hasItem(vacateDate.toString())));
         org.junit.jupiter.api.Assertions.assertEquals(originalBedStatus, bed.getStatus());
 
         mvc.perform(patch("/api/owner/bookings/bk-1004/confirm-vacancy")

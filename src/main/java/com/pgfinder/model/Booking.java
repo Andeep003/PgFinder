@@ -43,6 +43,8 @@ public class Booking {
 
     private Instant vacateRequestedAt;
 
+    private LocalDate vacateDate;
+
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 }

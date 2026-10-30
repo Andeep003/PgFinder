@@ -80,14 +80,17 @@ public final class ApiDtos {
 
     public record BookingDto(String id, Long bedId, String bedNo, String roomId, String pgId, String pgName,
                              LocalDate startDate, LocalDate endDate, String status, Instant createdAt,
-                             String guestId, String guestName, Instant vacateRequestedAt) {
+                             String guestId, String guestName, Instant vacateRequestedAt, LocalDate vacateDate) {
         public static BookingDto from(Booking booking) {
             return new BookingDto(booking.getId(), booking.getBed().getId(), booking.getBed().getBedNo(),
                     booking.getBed().getRoom().getId(), booking.getBed().getRoom().getPg().getId(),
                     booking.getBed().getRoom().getPg().getName(), booking.getStartDate(), booking.getEndDate(),
                     booking.getStatus(), booking.getCreatedAt(), booking.getGuest().getId(),
-                    booking.getGuest().getName(), booking.getVacateRequestedAt());
+                    booking.getGuest().getName(), booking.getVacateRequestedAt(), booking.getVacateDate());
         }
+    }
+
+    public record VacateRequest(@NotNull LocalDate vacateDate) {
     }
 
     public record ReviewWriteRequest(@Min(1) @Max(5) int rating, @Size(max = 2000) String comment) {

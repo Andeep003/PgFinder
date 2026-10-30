@@ -5,6 +5,7 @@ import com.pgfinder.dto.ApiDtos.AvailabilityDto;
 import com.pgfinder.dto.ApiDtos.AvailabilityRoomDto;
 import com.pgfinder.dto.ApiDtos.BookingDto;
 import com.pgfinder.dto.ApiDtos.BookingRequest;
+import com.pgfinder.dto.ApiDtos.VacateRequest;
 import com.pgfinder.exception.ApiException;
 import com.pgfinder.exception.NotFoundException;
 import com.pgfinder.model.Bed;
@@ -89,7 +90,7 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingDto requestVacate(String guestId, String bookingId) {
+    public BookingDto requestVacate(String guestId, String bookingId, VacateRequest request) {
         Booking booking = bookings.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
         if (!guestId.equals(booking.getGuest().getId())) {
@@ -98,8 +99,12 @@ public class BookingService {
         if (!"confirmed".equals(booking.getStatus())) {
             throw new ApiException(HttpStatus.CONFLICT, "Only an active booking can request to vacate");
         }
+        if (request.vacateDate().isBefore(LocalDate.now())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "vacateDate cannot be in the past");
+        }
         booking.setStatus("vacate_requested");
         booking.setVacateRequestedAt(Instant.now());
+        booking.setVacateDate(request.vacateDate());
         return BookingDto.from(booking);
     }
 

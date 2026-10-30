@@ -3,6 +3,7 @@ package com.pgfinder.controller;
 import com.pgfinder.dto.ApiDtos.AvailabilityDto;
 import com.pgfinder.dto.ApiDtos.BookingDto;
 import com.pgfinder.dto.ApiDtos.BookingRequest;
+import com.pgfinder.dto.ApiDtos.VacateRequest;
 import com.pgfinder.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -59,8 +60,9 @@ public class BookingController {
 
     @PatchMapping("/api/bookings/{bookingId}/vacate-request")
     @PreAuthorize("hasRole('USER')")
-    public BookingDto requestVacate(Authentication authentication, @PathVariable String bookingId) {
-        return bookingService.requestVacate(authentication.getName(), bookingId);
+    public BookingDto requestVacate(Authentication authentication, @PathVariable String bookingId,
+                                    @Valid @RequestBody VacateRequest request) {
+        return bookingService.requestVacate(authentication.getName(), bookingId, request);
     }
 
     @PatchMapping("/api/owner/bookings/{bookingId}/confirm-vacancy")
