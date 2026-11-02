@@ -16,8 +16,66 @@ cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-On Windows this also opens the frontend dev server in a separate terminal window.
-To run the frontend on its own (http://localhost:3000):
+On Windows, this command starts the frontend dev server in a separate terminal window as well as
+the API. Open `http://localhost:3000` for the UI and `http://localhost:8080` for the API. Run
+it with Node.js/npm installed; frontend dependencies are installed automatically the first time if
+needed. H2 data is recreated each time the app restarts.
+The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
+`jdbc:h2:mem:pgfinder`.
+
+To use MySQL instead, create/use the `pgfinder` database, set credentials, and activate the
+`mysql` profile:
+
+```powershell
+$env:DB_USERNAME = "root"
+$env:DB_PASSWORD = "your-local-password"
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
+```
+
+## Development sample data
+
+On an empty database, the backend seeds 12 demo PG listings with rooms, beds, amenities, rules,
+photos, and weekly food menus. The dev profile also seeds demo accounts:
+
+| Role | Email | Password |
+|---|---|---|
+| Owner | `owner1@pgfinder.local` | `demo1234` |
+| Owner | `owner2@pgfinder.local` | `demo1234` |
+| Owner | `owner3@pgfinder.local` | `demo1234` |
+| Guest | `guest@pgfinder.local` | `demo1234` |
+| Admin | `admin@pgfinder.local` | `demo1234` |
+
+These accounts are created only with the `dev` profile. Do not use demo credentials in production.
+Passwords for registered users are stored as BCrypt hashes. Login and registration return a
+24-hour bearer token; pass it as `Authorization: Bearer <token>` to protected endpoints.
+
+## API
+
+The endpoint catalog and access rules are in [API.md](./API.md). It covers authentication, public
+listing search/details, owner listing and room/bed management, bookings, reviews, complaints,
+admin moderation, and local photo uploads.
+
+Listing deletion is a soft delete (`status=disabled`) so existing booking/review records are
+preserved. New and edited listings are set to `pending` until an admin approves them. Booking
+creation locks the bed row and rejects overlapping date ranges.
+
+## Photo uploads
+
+Photos are stored on the local filesystem, not in the database. The default folder is `uploads/`;
+override it with `UPLOAD_DIR`. Uploads accept JPEG, PNG, or WebP up to 10 MB using multipart field
+`file`. The API returns a relative URL under `/uploads/`.
+
+During resident bed booking, the resident must also provide an identity proof photo. In this
+browser-based demo, the image is stored in the browser's IndexedDB and shown in booking details
+only to the owner of the selected PG. This is UI-level access in the same browser, not secure
+server-side authorization; the image is not uploaded to the backend. Do not use this flow with real
+identity documents until private, access-controlled server storage and an appropriate retention
+policy are implemented.
+
+Configure the frontend origin(s) with `CORS_ALLOWED_ORIGINS` as a comma-separated list. The
+defaults are `http://localhost:3000` and `http://localhost:5173`.
+
+## Test
 
 ```powershell
 cd frontend
