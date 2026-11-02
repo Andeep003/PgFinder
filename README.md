@@ -60,6 +60,13 @@ Photos are stored on the local filesystem, not in the database. The default fold
 override it with `UPLOAD_DIR`. Uploads accept JPEG, PNG, or WebP up to 10 MB using multipart field
 `file`. The API returns a relative URL under `/uploads/`.
 
+During resident bed booking, the resident must also provide an identity proof photo. In this
+browser-based demo, the image is stored in the browser's IndexedDB and shown in booking details
+only to the owner of the selected PG. This is UI-level access in the same browser, not secure
+server-side authorization; the image is not uploaded to the backend. Do not use this flow with real
+identity documents until private, access-controlled server storage and an appropriate retention
+policy are implemented.
+
 Configure the frontend origin(s) with `CORS_ALLOWED_ORIGINS` as a comma-separated list. The
 defaults are `http://localhost:3000` and `http://localhost:5173`.
 

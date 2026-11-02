@@ -136,7 +136,9 @@ export function calculatePeriodRent(monthlyRent, durationType, durationDays, dai
   return durationType === 'day' ? dailyRent * durationDays : monthlyRent;
 }
 
-export function createBooking({ userId, pgId, roomId, bedNo, moveInDate, durationType = 'month', durationDays = 30 }) {
+export function createBooking({
+  userId, pgId, roomId, bedNo, moveInDate, durationType = 'month', durationDays = 30, identityProofId,
+}) {
   return update((s) => {
     const pg = findPg(s, pgId);
     const room = findRoom(pg, roomId);
@@ -172,6 +174,7 @@ export function createBooking({ userId, pgId, roomId, bedNo, moveInDate, duratio
       moveInDate,
       allocatedOn: null,
       paidUntil: null,
+      identityProofId,
     };
     s.bookings.push(booking);
     return booking;

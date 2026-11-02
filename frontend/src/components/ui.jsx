@@ -33,9 +33,6 @@ export function StatTile({ label, value, hint, icon: Icon, tone = 'default' }) {
   return (
     <div className="card group relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative flex items-start justify-between gap-3 p-4 sm:p-5">
-    <div className="card relative overflow-hidden">
-      <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${TONE_BAR[tone] || TONE_BAR.default}`} />
-      <div className="flex items-start justify-between gap-2 px-4 py-3.5">
         <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
           <div className="mt-2 truncate font-display text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-[28px]">{value}</div>
@@ -143,9 +140,6 @@ export function Modal({ open, title, onClose, children, footer, wide }) {
         className={`relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl border border-border/60 bg-card shadow-xl transition-all duration-400 ease-ios sm:rounded-3xl ${
           wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'
         } ${visible ? 'translate-y-0 opacity-100 sm:scale-100' : 'translate-y-full opacity-100 sm:translate-y-4 sm:scale-95 sm:opacity-0'}`}
-    <div className="backdrop-enter fixed inset-0 z-[1000] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
-      <div
-        className={`modal-enter flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-lg sm:rounded-2xl ${wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-2.5 sm:hidden">
@@ -215,7 +209,6 @@ export function Photo({ src, alt, className = '' }) {
   if (!src || failed) {
     return (
       <div className={`flex items-center justify-center bg-ember-50 text-ember-300 dark:bg-stone-800 dark:text-stone-600 ${className}`}>
-      <div className={`flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50 text-slate-400 dark:from-slate-700 dark:to-slate-800 ${className}`}>
         <ImageOff className="size-8" />
       </div>
     );

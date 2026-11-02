@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, Link } from 'react-router-dom';
 import {
   BedDouble, Bell, Building2, CalendarCheck, Crosshair, ImagePlus, IndianRupee, LayoutDashboard, MessageSquareWarning,
@@ -16,6 +16,7 @@ import { AMENITIES, DEFAULT_FOOD_MENU } from '../../data/seed';
 import { compressImage, fmtDate, inr, WEEKDAYS } from '../../utils/format';
 import { coordinatesFromGoogleMapsUrl, getCurrentPosition, googleMapsUrl, isGoogleMapsUrl } from '../../utils/geo';
 import { dueInfo } from '../user/UserPortal';
+import { getIdentityProof } from '../../utils/identityProof';
 
 function useOwnerData() {
   const { user } = useAuth();
@@ -546,8 +547,35 @@ function Bookings() {
 
 function ResidentModal({ booking, onClose }) {
   const db = useDB();
+  const { user } = useAuth();
   const u = findUser(db, booking.userId);
+  const pg = findPg(db, booking.pgId);
+  const isBookingOwner = pg?.ownerId === user?.id;
   const pays = db.payments.filter((p) => p.bookingId === booking.id);
+  const [identityProofUrl, setIdentityProofUrl] = useState('');
+  const [identityProofError, setIdentityProofError] = useState('');
+  useEffect(() => {
+    let active = true;
+    let objectUrl = '';
+    setIdentityProofUrl('');
+    setIdentityProofError('');
+    if (!booking.identityProofId || !isBookingOwner) return () => { active = false; };
+
+    getIdentityProof(booking.identityProofId)
+      .then((proof) => {
+        if (!proof?.blob) throw new Error('Identity proof photo is not available in this browser.');
+        objectUrl = URL.createObjectURL(proof.blob);
+        if (active) setIdentityProofUrl(objectUrl);
+      })
+      .catch((error) => {
+        if (active) setIdentityProofError(error.message);
+      });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [booking.identityProofId, isBookingOwner]);
   const rows = [
     ['Name', u?.name], ['Email', u?.email], ['Phone', u?.phone], ['Gender', u?.gender], ['DOB', fmtDate(u?.dob)],
     ['Occupation', `${u?.occupation || ''}${u?.company ? ` · ${u.company}` : ''}`], ['ID proof', `${u?.idType} · ${u?.idNumber}`], ['Address', u?.address],
@@ -565,6 +593,21 @@ function ResidentModal({ booking, onClose }) {
           <div key={k}><dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{k}</dt><dd className="font-medium text-foreground">{v || '—'}</dd></div>
         ))}
       </dl>
+      <section className="mt-6 border-t border-border pt-4">
+        <h3 className="text-sm font-semibold text-foreground">Identity proof photo</h3>
+        {!isBookingOwner ? (
+          <p className="mt-2 text-sm text-muted-foreground">Only the owner of this PG can view the resident’s identity proof.</p>
+        ) : !booking.identityProofId ? (
+          <p className="mt-2 text-sm text-muted-foreground">No identity proof photo was uploaded for this booking.</p>
+        ) : identityProofUrl ? (
+          <a href={identityProofUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block">
+            <img src={identityProofUrl} alt="Resident identity proof" className="max-h-80 max-w-full rounded-xl border border-border object-contain" />
+            <span className="mt-1 block text-xs font-medium text-owner">Open full-size image</span>
+          </a>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">{identityProofError || 'Loading identity proof…'}</p>
+        )}
+      </section>
     </Modal>
   );
 }

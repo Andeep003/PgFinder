@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, BedDouble, Sparkles, UserPlus, Lock } from 'lucide-react';
 import PublicNavbar from '../../components/PublicNavbar';
@@ -7,6 +7,7 @@ import { Card, EmptyState, Modal, Photo, toast } from '../../components/ui';
 import { useDB, findPg, findRoom, registerUser, createBooking, calculatePeriodRent } from '../../store/db';
 import { useAuth } from '../../store/auth';
 import { inr } from '../../utils/format';
+import { deleteIdentityProof, saveIdentityProof, validateIdentityProof } from '../../utils/identityProof';
 import { isoDaysFromNow } from '../../data/seed';
 
 const SAMPLE = {
@@ -43,7 +44,21 @@ export default function BookingRegister() {
   const [durationDays, setDurationDays] = useState('1');
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
+  const [identityProof, setIdentityProof] = useState(null);
+  const [identityProofPreview, setIdentityProofPreview] = useState('');
+  const [identityProofConsent, setIdentityProofConsent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(() => (user && user.role === 'user' ? { ...EMPTY, ...user, confirm: '' } : EMPTY));
+
+  useEffect(() => {
+    if (!identityProof) {
+      setIdentityProofPreview('');
+      return undefined;
+    }
+    const preview = URL.createObjectURL(identityProof);
+    setIdentityProofPreview(preview);
+    return () => URL.revokeObjectURL(preview);
+  }, [identityProof]);
 
   if (!pg) return <EmptyState title="PG not found" />;
   const room = findRoom(pg, sel.roomId);
@@ -61,12 +76,28 @@ export default function BookingRegister() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const submit = (e) => {
+  const selectIdentityProof = (e) => {
+    const file = e.target.files?.[0] || null;
+    try {
+      validateIdentityProof(file);
+      setIdentityProof(file);
+      setError('');
+    } catch (err) {
+      setIdentityProof(null);
+      e.target.value = '';
+      setError(err.message);
+    }
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
+    let identityProofId;
     try {
       if (!room || !bed) throw new Error('Please select a bed.');
       if (bed.status !== 'available') throw new Error('This bed is no longer available. Please pick another.');
+      validateIdentityProof(identityProof);
       if (durationType === 'day') {
         if (!Number.isSafeInteger(Number(durationDays)) || Number(durationDays) < 1) {
           throw new Error('Please enter a valid number of days.');
@@ -76,6 +107,8 @@ export default function BookingRegister() {
         }
       }
       if (!agree) throw new Error('Please accept the house rules and terms.');
+      if (!identityProofConsent) throw new Error('Please agree to share the identity proof photo with this PG owner.');
+      identityProofId = await saveIdentityProof(identityProof);
       let userId = user?.id;
       if (!loggedInTenant) {
         if (form.password.length < 6) throw new Error('Password must be at least 6 characters.');
@@ -88,11 +121,21 @@ export default function BookingRegister() {
       const booking = createBooking({
         userId, pgId: pg.id, roomId: room.id, bedNo: bed.bedNo, moveInDate: moveIn,
         durationType, durationDays: durationType === 'day' ? Number(durationDays) : 30,
+        identityProofId,
       });
       navigate(`/payment/${booking.id}`);
     } catch (err) {
+      if (identityProofId) {
+        try {
+          await deleteIdentityProof(identityProofId);
+        } catch (cleanupError) {
+          console.error('Could not remove an unused identity proof photo.', cleanupError);
+        }
+      }
       setError(err.message);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -163,6 +206,38 @@ export default function BookingRegister() {
                 <Field label="Emergency contact name" {...bind('emergencyName')} />
                 <Field label="Emergency contact phone" {...bind('emergencyPhone')} type="tel" />
               </div>
+            </Card>
+
+            <Card title="Identity proof photo">
+              <p className="mb-3 text-sm text-muted-foreground">
+                Upload a clear photo of an identity document. It will be shown only to the owner of this PG in the booking details.
+              </p>
+              <input
+                id="identity-proof"
+                className="input h-auto py-2"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={selectIdentityProof}
+                required
+              />
+              <p className="mt-1 text-xs text-muted-foreground">JPEG, PNG, or WebP, up to 10 MB.</p>
+              <label className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={identityProofConsent}
+                  onChange={(e) => setIdentityProofConsent(e.target.checked)}
+                  required
+                />
+                I agree to share this identity proof photo with the owner of this PG.
+              </label>
+              {identityProofPreview && (
+                <img
+                  src={identityProofPreview}
+                  alt="Preview of selected identity proof"
+                  className="mt-3 max-h-56 max-w-full rounded-xl border border-border object-contain"
+                />
+              )}
             </Card>
 
             {!loggedInTenant && (
@@ -240,8 +315,8 @@ export default function BookingRegister() {
                   I agree to the house rules and the 1-month notice / refund policy.
                 </label>
 
-                <button type="submit" className="btn-primary mt-4 w-full">
-                  <UserPlus className="size-4" /> {loggedInTenant ? 'Continue to payment' : 'Register & continue to payment'}
+                <button type="submit" disabled={submitting} className="btn-primary mt-4 w-full">
+                  <UserPlus className="size-4" /> {submitting ? 'Saving…' : loggedInTenant ? 'Continue to payment' : 'Register & continue to payment'}
                 </button>
               </div>
             </div>
