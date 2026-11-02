@@ -1,13 +1,18 @@
-# PgFinder Backend
+# PgFinder
 
-REST API for PgFinder, built with Java 25 and Spring Boot 3.5. Local startup uses an in-memory H2
-database by default; MySQL is optional.
+Location-based PG search and booking, with Resident, PG Owner and Super Admin portals.
+
+| Folder | What it is |
+|---|---|
+| [`backend/`](./backend) | REST API — Java 25, Spring Boot 3.5, H2 (default) or MySQL. See [backend/README.md](./backend/README.md) and [backend/API.md](./backend/API.md). |
+| [`frontend/`](./frontend) | Web app — React, Tailwind, lucide-react. See [frontend/README.md](./frontend/README.md). |
 
 ## Run locally
 
-Start locally with H2 (no MySQL required):
+Backend (API on http://localhost:8080):
 
 ```powershell
+cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -73,5 +78,7 @@ defaults are `http://localhost:3000` and `http://localhost:5173`.
 ## Test
 
 ```powershell
-.\mvnw.cmd test
+cd frontend
+npm install
+npm start
 ```
