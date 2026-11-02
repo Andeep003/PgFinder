@@ -19,6 +19,10 @@ export default function PublicNavbar() {
           <NavLink to="/" end className={tab}><Search className="size-4" /> Find a PG</NavLink>
           {!user && <NavLink to="/owner-signup" className={tab}><Building2 className="size-4" /> List your PG</NavLink>}
         </nav>
+        <Link to="/" className="group flex items-center gap-2">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white shadow-sm transition duration-200 group-hover:scale-105">PG</span>
+          <span className="text-base font-semibold text-foreground">PG Finder</span>
+        </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
           {user ? (

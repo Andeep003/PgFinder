@@ -271,6 +271,25 @@ export default function Home() {
                   </button>
                 </div>
               </form>
+      <section className="hero-surface border-b border-border/70 text-foreground">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border/80 bg-white/70 px-3 py-1 text-xs font-semibold tracking-wide text-primary dark:bg-card/70 dark:text-slate-300">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
+            A better place to stay
+          </div>
+          <h1 className="max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">Find a place that feels like home.</h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">Explore verified PGs, compare amenities, and find a room that fits your life and budget.</p>
+          <form onSubmit={onSearch} className="mt-6 flex flex-col gap-2 rounded-2xl border border-white/80 bg-white/95 p-2 shadow-lg shadow-slate-900/5 transition-shadow duration-300 focus-within:shadow-xl dark:border-border dark:bg-card sm:flex-row">
+            <div className="flex flex-1 items-center gap-2 px-2">
+              <Search className="size-5 shrink-0 text-slate-400" />
+              <input
+                list="localities"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by PG name or area (e.g. Pakka Telangana, Madhapur)"
+                className="h-11 w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              />
+              <datalist id="localities">{LOCALITIES.map((l) => <option key={l.name} value={l.name} />)}</datalist>
             </div>
 
             <div className="mt-5 flex animate-fade-up flex-wrap items-center gap-2 [animation-delay:240ms]">
@@ -308,6 +327,13 @@ export default function Home() {
                 <div className="text-xs text-muted-foreground">{center?.name ? center.name.split(',')[0] : 'Finding your area…'}</div>
               </div>
             </div>
+          </form>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {LOCALITIES.slice(0, 7).map((l) => (
+              <button key={l.name} onClick={() => applyCenter({ ...l, source: 'search' })} className="rounded-full border border-border/80 bg-white/75 px-3 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-white dark:bg-card/80 dark:text-foreground dark:hover:bg-muted">
+                {l.name.split(',')[0]}
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -368,6 +394,9 @@ export default function Home() {
                     <div key={r.pg.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 10) * 45}ms` }}>
                       <PGCard {...r} active={hoverId === r.pg.id} onHover={setHoverId} />
                     </div>
+                <div className={`listing-grid grid gap-4 ${view === 'list' ? 'xl:grid-cols-2' : ''}`}>
+                  {results.map((r) => (
+                    <PGCard key={r.pg.id} {...r} active={hoverId === r.pg.id} onHover={setHoverId} />
                   ))}
                 </div>
               )}

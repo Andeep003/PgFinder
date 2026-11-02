@@ -127,6 +127,7 @@ function Dashboard() {
               { label: 'Resident', render: (b) => findUser(db, b.userId)?.name },
               { label: 'PG', render: (b) => findPg(db, b.pgId)?.name },
               { label: 'Room/Bed', render: (b) => `${b.roomNo} / ${b.bedNo}` },
+              { label: 'Vacate date', render: (b) => fmtDate(b.vacateDate) },
               { label: '', render: (b) => (
                 <button className="btn-success h-8 px-3 text-xs" onClick={() => {
                   if (!window.confirm(`Confirm that ${findUser(db, b.userId)?.name} has vacated? This will make bed ${b.bedNo} available for a new resident.`)) return;
@@ -514,6 +515,7 @@ function Bookings() {
             { label: 'Room / Bed', render: (b) => `${b.roomNo} / ${b.bedNo}` },
             { label: 'Booked on', render: (b) => fmtDate(b.bookedOn) },
             { label: 'Move-in', render: (b) => fmtDate(b.moveInDate) },
+            { label: 'Vacate date', render: (b) => b.status === 'vacate_requested' || b.vacateDate ? fmtDate(b.vacateDate) : '—' },
             { label: 'Rent', render: (b) => inr(b.rent) },
             { label: 'Status', render: (b) => <StatusBadge status={b.status} label={b.status === 'booked' ? 'Booked' : undefined} /> },
             {
@@ -551,6 +553,7 @@ function ResidentModal({ booking, onClose }) {
     ['Occupation', `${u?.occupation || ''}${u?.company ? ` · ${u.company}` : ''}`], ['ID proof', `${u?.idType} · ${u?.idNumber}`], ['Address', u?.address],
     ['Emergency contact', `${u?.emergencyName} · ${u?.emergencyPhone}`], ['PG', findPg(db, booking.pgId)?.name], ['Room / Bed', `${booking.roomNo} / ${booking.bedNo}`],
     ['Move-in', fmtDate(booking.moveInDate)], ['Booking period', booking.durationType === 'day' ? `${booking.durationDays} days` : 'Monthly'],
+    ['Vacate date', fmtDate(booking.vacateDate)],
     ['Rent / Deposit', `${inr(booking.initialRent ?? booking.rent)} / ${inr(booking.deposit)}`], ['Paid until', fmtDate(booking.paidUntil)],
     ['Total paid', inr(pays.reduce((a, p) => a + p.amount, 0))],
   ];

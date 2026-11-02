@@ -78,6 +78,11 @@ export default function DashboardLayout({ role, nav, children }) {
       <div className="flex min-h-screen">
         <aside
           className={`fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden text-white shadow-2xl transition-[transform,width] duration-500 ease-ios lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ${t.aside} ${
+    <div className="min-h-screen bg-background">
+      {mobileOpen && <div className="backdrop-enter fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
+      <div className="flex min-h-screen">
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 flex flex-col text-white transition-all duration-300 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${t.aside} ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           } ${collapsed ? 'w-[72px]' : 'w-64'}`}
         >
@@ -105,6 +110,9 @@ export default function DashboardLayout({ role, nav, children }) {
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
                   `${navItem} ${isActive ? 'bg-white/[0.14] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_8px_20px_-8px_rgb(0_0_0/0.45)]' : `${t.muted} hover:translate-x-0.5 hover:bg-white/[0.07] hover:text-white`}`
+                  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                    isActive ? t.active : `${t.muted} ${t.hover} hover:text-white`
+                  }`
                 }
               >
                 {({ isActive }) => (
