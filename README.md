@@ -1,14 +1,14 @@
 # PgFinder Backend
 
-REST API for PgFinder, built with Java 25, Spring Boot 3.5, Spring Data JPA, and MySQL. The `dev`
-profile uses an in-memory H2 database and is suitable for local testing.
+REST API for PgFinder, built with Java 25 and Spring Boot 3.5. Local startup uses an in-memory H2
+database by default; MySQL is optional.
 
 ## Run locally
 
-Start with H2 (no MySQL required):
+Start locally with H2 (no MySQL required):
 
 ```powershell
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+.\mvnw.cmd spring-boot:run
 ```
 
 On Windows, this command starts the frontend dev server in a separate terminal window as well as
@@ -18,12 +18,13 @@ needed. H2 data is recreated each time the app restarts.
 The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 `jdbc:h2:mem:pgfinder`.
 
-For MySQL, create/use the `pgfinder` database and set credentials before starting:
+To use MySQL instead, create/use the `pgfinder` database, set credentials, and activate the
+`mysql` profile:
 
 ```powershell
 $env:DB_USERNAME = "root"
 $env:DB_PASSWORD = "your-local-password"
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
 ```
 
 ## Development sample data

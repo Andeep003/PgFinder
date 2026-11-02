@@ -1,21 +1,46 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, ChevronRight, Home, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
+import { ThemeToggle } from './ui';
 import useTheme from '../hooks/useTheme';
 import { useAuth } from '../store/auth';
 
-// One layout for all three portals, colored per role exactly like the HRMS shells:
-// Super Admin = blue, Owner (client admin) = purple, Tenant (employee) = cyan.
+// One layout for all three portals, each with its own accent:
+// Super Admin = plum (brinjal), Owner (client admin) = ember orange, Tenant (employee) = mist blue.
 const THEMES = {
-  superadmin: { aside: 'bg-sidebar', muted: 'text-sidebar-muted', active: 'bg-sidebar-accent text-white', hover: 'hover:bg-sidebar-accent/60', avatar: 'bg-primary', label: 'Super Admin' },
-  owner: { aside: 'bg-owner-sidebar', muted: 'text-owner-sidebar-muted', active: 'bg-owner-sidebar-accent text-white', hover: 'hover:bg-owner-sidebar-accent/60', avatar: 'bg-owner', label: 'PG Owner' },
-  user: { aside: 'bg-tenant-sidebar', muted: 'text-tenant-sidebar-muted', active: 'bg-tenant-sidebar-accent text-white', hover: 'hover:bg-tenant-sidebar-accent/60', avatar: 'bg-tenant', label: 'Resident' },
+  superadmin: {
+    aside: 'bg-[#2A1328] via-[#3F1D3C] to-[#5A2A55]',
+    glow: 'bg-coral-500/25',
+    muted: 'text-sidebar-muted',
+    logo: 'bg-ember-400',
+    avatar: 'bg-plum-500',
+    label: 'Super Admin',
+  },
+  owner: {
+    aside: 'bg-[#2B1710] via-[#47241A] to-[#6B3322]',
+    glow: 'bg-ember-400/30',
+    muted: 'text-owner-sidebar-muted',
+    logo: 'bg-ember-400',
+    avatar: 'bg-ember-500',
+    label: 'PG Owner',
+  },
+  user: {
+    aside: 'bg-[#0F2A3A] via-[#163C50] to-[#1D4F5E]',
+    glow: 'bg-mist-400/30',
+    muted: 'text-tenant-sidebar-muted',
+    logo: 'bg-mist-400',
+    avatar: 'bg-mist-500',
+    label: 'Resident',
+  },
 };
+
+const navItem = 'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-250 ease-ios active:scale-[0.97]';
 
 export default function DashboardLayout({ role, nav, children }) {
   const t = THEMES[role];
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [theme, toggleTheme] = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,33 +48,59 @@ export default function DashboardLayout({ role, nav, children }) {
 
   const initials = (user?.name || '?').split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
   return (
+    <div className="min-h-screen">
+      <div
+        className={`fixed inset-0 z-40 bg-stone-950/50 backdrop-blur-sm transition-opacity duration-400 ease-ios lg:hidden ${
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={() => setMobileOpen(false)}
+      />
+      <div className="flex min-h-screen">
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden text-white shadow-2xl transition-[transform,width] duration-500 ease-ios lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ${t.aside} ${
     <div className="min-h-screen bg-background">
       {mobileOpen && <div className="backdrop-enter fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
       <div className="flex min-h-screen">
         <aside
           className={`fixed inset-y-0 left-0 z-50 flex flex-col text-white transition-all duration-300 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${t.aside} ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
-          } ${collapsed ? 'w-16' : 'w-60'}`}
+          } ${collapsed ? 'w-[72px]' : 'w-64'}`}
         >
-          <div className="flex items-center gap-3 px-4 py-4">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-sm font-bold">PG</div>
+
+          <div className="relative flex items-center gap-3 px-4 pb-4 pt-[max(1.25rem,env(safe-area-inset-top))]">
+            <div className={`flex size-10 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold shadow-lg ring-1 ring-white/20 ${t.logo}`}>PG</div>
             {!collapsed && (
-              <div className="flex-1">
-                <div className="text-sm font-semibold leading-tight">PG Finder</div>
+              <div className="min-w-0 flex-1 animate-fade-in">
+                <div className="font-display text-[15px] font-bold leading-tight">PG Finder</div>
                 <div className={`text-xs ${t.muted}`}>{t.label}</div>
               </div>
             )}
-            <button className={`${t.muted} lg:hidden`} onClick={() => setMobileOpen(false)}>
+            <button className={`icon-btn size-8 ${t.muted} hover:bg-white/10 hover:text-white lg:hidden`} onClick={() => setMobileOpen(false)} aria-label="Close menu">
               <X className="size-5" />
             </button>
           </div>
-          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-2">
+
+          <nav className="relative flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2">
             {nav.map(({ to, label, icon: Icon, badge, end }) => (
               <NavLink
                 key={to}
@@ -58,73 +109,89 @@ export default function DashboardLayout({ role, nav, children }) {
                 title={label}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
+                  `${navItem} ${isActive ? 'bg-white/[0.14] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_8px_20px_-8px_rgb(0_0_0/0.45)]' : `${t.muted} hover:translate-x-0.5 hover:bg-white/[0.07] hover:text-white`}`
                   `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive ? t.active : `${t.muted} ${t.hover} hover:text-white`
                   }`
                 }
               >
-                <span className="relative shrink-0">
-                  <Icon className="size-4" />
-                  {collapsed && badge > 0 && <span className="absolute -right-1 -top-1 size-2 rounded-full bg-red-500" />}
-                </span>
-                {!collapsed && <span className="truncate">{label}</span>}
-                {!collapsed && badge > 0 && (
-                  <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-semibold text-white">
-                    {badge}
-                  </span>
+                {({ isActive }) => (
+                  <>
+                    <span className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-white transition-all duration-400 ease-spring ${isActive ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`} />
+                    <span className="relative shrink-0">
+                      <Icon className={`size-[18px] transition-transform duration-400 ease-spring ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+                      {collapsed && badge > 0 && <span className="absolute -right-1 -top-1 size-2 rounded-full bg-coral-500 ring-2 ring-white/20" />}
+                    </span>
+                    {!collapsed && <span className="truncate">{label}</span>}
+                    {!collapsed && badge > 0 && (
+                      <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-coral-500 px-1.5 text-[11px] font-bold text-white shadow-md">
+                        {badge}
+                      </span>
+                    )}
+                  </>
                 )}
               </NavLink>
             ))}
           </nav>
-          <div className="space-y-1 border-t border-white/10 px-2 py-3">
-            <NavLink to="/" className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${t.muted} ${t.hover} hover:text-white`}>
-              <Home className="size-4 shrink-0" />
+
+          <div className="relative space-y-1 border-t border-white/10 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+            <NavLink to="/" className={`${navItem} ${t.muted} hover:bg-white/[0.07] hover:text-white`}>
+              <Home className="size-[18px] shrink-0" />
               {!collapsed && 'Browse PGs'}
             </NavLink>
-            <button
-              onClick={() => setCollapsed((c) => !c)}
-              className={`hidden w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium lg:flex ${t.muted} ${t.hover} hover:text-white`}
-            >
-              {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+            <button onClick={() => setCollapsed((c) => !c)} className={`${navItem} hidden w-full lg:flex ${t.muted} hover:bg-white/[0.07] hover:text-white`}>
+              {collapsed ? <ChevronRight className="size-[18px]" /> : <ChevronLeft className="size-[18px]" />}
               {!collapsed && 'Collapse'}
             </button>
           </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/80 bg-card/85 px-4 py-3 backdrop-blur sm:px-6">
-            <button className="text-foreground lg:hidden" onClick={() => setMobileOpen(true)}>
+          <header className="glass sticky top-0 z-30 flex items-center justify-between border-b border-border/60 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
+            <button className="icon-btn -ml-2 text-foreground lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
               <Menu className="size-5" />
             </button>
             <div className="hidden lg:block" />
-            <div className="relative">
-              <button onClick={() => setMenuOpen((v) => !v)} className="inline-flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-2.5">
-                <span className={`flex size-7 items-center justify-center rounded-full text-xs font-semibold text-white ${t.avatar}`}>{initials}</span>
-                <span className="max-w-[140px] truncate text-sm font-medium text-foreground">{user?.name}</span>
-                <ChevronDown className="size-3.5 text-muted-foreground" />
-              </button>
-              {menuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                  <div className="menu-enter absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-                    <div className="border-b border-border px-3 py-2.5">
-                      <div className="truncate text-sm font-medium text-foreground">{user?.name}</div>
+            <div className="flex items-center gap-1.5">
+              <ThemeToggle theme={theme} onToggle={toggleTheme} className="hidden sm:inline-flex" />
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card py-1 pl-1 pr-3 shadow-sm transition-all duration-250 ease-ios hover:shadow-md active:scale-95"
+                >
+                  <span className={`flex size-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${t.avatar}`}>{initials}</span>
+                  <span className="hidden max-w-[140px] truncate text-sm font-semibold text-foreground sm:inline">{user?.name}</span>
+                  <ChevronDown className={`size-3.5 text-muted-foreground transition-transform duration-400 ease-ios ${menuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {menuOpen && <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />}
+                <div
+                  className={`absolute right-0 z-20 mt-2 w-60 origin-top-right overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-1.5 shadow-xl backdrop-blur-xl transition-all duration-250 ease-ios ${
+                    menuOpen ? 'visible scale-100 opacity-100' : 'invisible -translate-y-1 scale-95 opacity-0'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 px-2.5 py-2.5">
+                    <span className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${t.avatar}`}>{initials}</span>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-foreground">{user?.name}</div>
                       <div className="truncate text-xs text-muted-foreground">{user?.email}</div>
                     </div>
-                    <button onClick={toggleTheme} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted">
-                      {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
-                      {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-                    </button>
-                    <button onClick={handleLogout} className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40">
-                      <LogOut className="size-4" />
-                      Log out
-                    </button>
                   </div>
-                </>
-              )}
+                  <div className="my-1 h-px bg-border/70" />
+                  <button onClick={toggleTheme} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted">
+                    {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                    {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                  </button>
+                  <button onClick={handleLogout} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-coral-600 transition-colors hover:bg-coral-500/10 dark:text-coral-400">
+                    <LogOut className="size-4" />
+                    Log out
+                  </button>
+                </div>
+              </div>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6">{children}</main>
+          <main key={pathname} className="mx-auto w-full max-w-[1400px] flex-1 animate-fade-up px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-8">
+            {children}
+          </main>
         </div>
       </div>
     </div>

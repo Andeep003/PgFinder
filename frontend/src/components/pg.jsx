@@ -15,26 +15,32 @@ export function ImageGallery({ images = [], name }) {
   const go = (d) => setIdx((i) => (i + d + list.length) % list.length);
   return (
     <div>
-      <div className="relative overflow-hidden rounded-xl">
-        <Photo src={list[idx]} alt={`${name} photo ${idx + 1}`} className="h-64 w-full sm:h-96" />
+      <div className="group relative overflow-hidden rounded-3xl shadow-lg ring-1 ring-border/50">
+        <Photo key={idx} src={list[idx]} alt={`${name} photo ${idx + 1}`} className="h-64 w-full transition-transform duration-[1200ms] group-hover:scale-[1.03] sm:h-[26rem]" />
         {list.length > 1 && (
           <>
-            <button onClick={() => go(-1)} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 p-2 text-white hover:bg-black/60">
+            <button onClick={() => go(-1)} aria-label="Previous photo" className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2.5 text-slate-900 shadow-lg backdrop-blur-md transition-all duration-250 ease-ios hover:scale-110 hover:bg-white active:scale-90 sm:opacity-0 sm:group-hover:opacity-100">
               <ChevronLeft className="size-5" />
             </button>
-            <button onClick={() => go(1)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 p-2 text-white hover:bg-black/60">
+            <button onClick={() => go(1)} aria-label="Next photo" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2.5 text-slate-900 shadow-lg backdrop-blur-md transition-all duration-250 ease-ios hover:scale-110 hover:bg-white active:scale-90 sm:opacity-0 sm:group-hover:opacity-100">
               <ChevronRight className="size-5" />
             </button>
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white">
+            <span className="absolute bottom-3 right-3 rounded-full bg-black/40 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
               {idx + 1} / {list.length}
             </span>
           </>
         )}
       </div>
       {list.length > 1 && (
-        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-3 flex gap-2 overflow-x-auto p-1">
           {list.map((src, i) => (
-            <button key={i} onClick={() => setIdx(i)} className={`shrink-0 overflow-hidden rounded-lg ring-2 ${i === idx ? 'ring-primary' : 'ring-transparent opacity-70 hover:opacity-100'}`}>
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              className={`shrink-0 overflow-hidden rounded-xl ring-2 ring-offset-2 ring-offset-background transition-all duration-300 ease-ios active:scale-95 ${
+                i === idx ? 'scale-105 ring-primary' : 'ring-transparent opacity-60 hover:opacity-100'
+              }`}
+            >
               <Photo src={src} alt="" className="h-14 w-20" />
             </button>
           ))}
@@ -45,11 +51,17 @@ export function ImageGallery({ images = [], name }) {
 }
 
 // ---------- Room + bed picker ----------
+const BED_COLORS = {
+  available: 'border-emerald-300/80 bg-emerald-50 text-emerald-700 dark:border-emerald-700/70 dark:bg-emerald-950/40 dark:text-emerald-300',
+  booked: 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300',
+  occupied: 'border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500',
+  selected: 'border-transparent bg-primary text-white',
+};
 const BED_STYLE = {
-  available: 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
-  booked: 'cursor-not-allowed border-amber-200 bg-amber-50 text-amber-600 opacity-80 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300',
-  occupied: 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500',
-  selected: 'border-primary bg-primary text-white ring-2 ring-primary/30',
+  available: `${BED_COLORS.available} hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-lg`,
+  booked: `${BED_COLORS.booked} cursor-not-allowed opacity-80`,
+  occupied: `${BED_COLORS.occupied} cursor-not-allowed`,
+  selected: `${BED_COLORS.selected} scale-105 shadow-glow`,
 };
 
 export function BedLegend() {
@@ -57,7 +69,7 @@ export function BedLegend() {
     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
       {[['available', 'Available'], ['selected', 'Selected'], ['booked', 'Booked'], ['occupied', 'Occupied']].map(([k, l]) => (
         <span key={k} className="inline-flex items-center gap-1.5">
-          <span className={`size-3.5 rounded border ${BED_STYLE[k]}`} />
+          <span className={`size-3.5 rounded-md border ${BED_COLORS[k]}`} />
           {l}
         </span>
       ))}
@@ -69,12 +81,12 @@ export function RoomCard({ room, selected, onSelectBed, compact }) {
   const free = room.beds.filter((b) => b.status === 'available').length;
   const Icon = room.sharing === 1 ? BedSingle : BedDouble;
   return (
-    <div className="rounded-xl border border-border/80 bg-card p-4">
+    <div className="rounded-2xl border border-border/70 bg-card p-4 transition-all duration-400 ease-ios hover:border-primary/20 hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-foreground">Room {room.roomNo}</span>
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">Floor {room.floor}</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Floor {room.floor}</span>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span>{room.type}</span>
@@ -98,7 +110,7 @@ export function RoomCard({ room, selected, onSelectBed, compact }) {
                 key={bed.bedNo}
                 disabled={bed.status !== 'available' || !onSelectBed}
                 onClick={() => onSelectBed?.(room, bed)}
-                className={`flex w-16 flex-col items-center rounded-lg border-2 px-2 py-2 text-xs font-semibold transition ${style}`}
+                className={`flex w-16 flex-col items-center rounded-xl border-2 px-2 py-2 text-xs font-semibold transition-all duration-300 ease-spring active:scale-90 ${style}`}
                 title={`Bed ${bed.bedNo} - ${bed.status}`}
               >
                 <Icon className="mb-0.5 size-5" />
@@ -118,18 +130,18 @@ export function PGCard({ pg, stats, rating, distance, active, onHover }) {
     <div
       onMouseEnter={() => onHover?.(pg.id)}
       onMouseLeave={() => onHover?.(null)}
-      className={`group flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row ${active ? 'border-primary' : 'border-border/80'}`}
+      className={`card card-interactive group flex flex-col overflow-hidden sm:flex-row ${active ? '-translate-y-1 border-primary/50 shadow-xl ring-4 ring-primary/10' : ''}`}
     >
-      <Link to={`/pg/${pg.id}`} className="relative sm:w-56 sm:shrink-0">
-        <Photo src={pg.images[0]} alt={pg.name} className="h-44 w-full sm:h-full" />
-        <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-slate-700">{pg.gender}</span>
+      <Link to={`/pg/${pg.id}`} className="relative overflow-hidden sm:w-56 sm:shrink-0">
+        <Photo src={pg.images[0]} alt={pg.name} className="h-48 w-full group-hover:scale-110 sm:h-full" />
+        <span className="absolute left-3 top-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-sm backdrop-blur-md">{pg.gender}</span>
       </Link>
       <div className="flex flex-1 flex-col p-4">
         <Link to={`/pg/${pg.id}`} className="flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-foreground group-hover:text-primary">{pg.name}</h3>
+          <h3 className="text-[17px] font-bold leading-snug text-foreground transition-colors duration-250 group-hover:text-primary">{pg.name}</h3>
           {rating.count > 0 && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-600 px-1.5 py-0.5 text-xs font-semibold text-white">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sage-500 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
               {rating.avg.toFixed(1)} ★
             </span>
           )}
@@ -152,16 +164,16 @@ export function PGCard({ pg, stats, rating, distance, active, onHover }) {
         {distance != null && <div className="mt-1 text-xs font-medium text-primary">{distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away</div>}
         <div className="mt-2 flex flex-wrap gap-1.5">
           {pg.amenities.slice(0, 5).map((a) => (
-            <span key={a} className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">{a}</span>
+            <span key={a} className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{a}</span>
           ))}
           {pg.amenities.length > 5 && <span className="text-[11px] text-muted-foreground">+{pg.amenities.length - 5} more</span>}
         </div>
         <div className="mt-auto flex items-end justify-between gap-2 pt-3">
           <div>
             <div className="text-xs text-muted-foreground">Starts from</div>
-            <div className="text-lg font-semibold text-foreground">{inr(stats.minRent)}<span className="text-xs font-normal text-muted-foreground">/mo</span></div>
+            <div className="font-display text-xl font-extrabold tracking-tight text-foreground">{inr(stats.minRent)}<span className="text-xs font-medium text-muted-foreground">/mo</span></div>
           </div>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${stats.available ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-red-50 text-red-600 dark:bg-red-950/50'}`}>
+          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${stats.available ? 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300' : 'bg-rose-500/10 text-rose-600 ring-rose-500/20 dark:text-rose-300'}`}>
             {stats.available ? `${stats.available} beds available` : 'Fully occupied'}
           </span>
         </div>
@@ -186,7 +198,7 @@ function Recenter({ center, zoom }) {
 
 export function PGMap({ center, items = [], activeId, height = 'h-[420px]', zoom = 13, showMe = true }) {
   return (
-    <div className={`overflow-hidden rounded-xl border border-border ${height}`}>
+    <div className={`overflow-hidden rounded-3xl border border-border/70 shadow-lg ${height}`}>
       <MapContainer center={[center.lat, center.lng]} zoom={zoom} scrollWheelZoom className="h-full w-full">
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <Recenter center={center} zoom={zoom} />
@@ -225,10 +237,10 @@ export function FoodMenuTable({ menu, highlightToday = true }) {
         </thead>
         <tbody className="divide-y divide-border/70">
           {WEEKDAYS.map((d) => (
-            <tr key={d} className={highlightToday && d === today ? 'bg-primary/5' : ''}>
+            <tr key={d} className={`transition-colors duration-250 hover:bg-accent/40 ${highlightToday && d === today ? 'bg-primary/[0.06]' : ''}`}>
               <td className="td font-semibold">
                 {d}
-                {highlightToday && d === today && <span className="ml-2 rounded bg-primary px-1.5 py-0.5 text-[10px] text-white">TODAY</span>}
+                {highlightToday && d === today && <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">TODAY</span>}
               </td>
               <td className="td whitespace-normal">{menu?.[d]?.breakfast || '—'}</td>
               <td className="td whitespace-normal">{menu?.[d]?.lunch || '—'}</td>
@@ -249,7 +261,7 @@ export function ReviewList({ reviews }) {
         <div key={r.id} className="py-3 first:pt-0 last:pb-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">{r.userName[0]}</span>
+              <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">{r.userName[0]}</span>
               <span className="text-sm font-medium text-foreground">{r.userName}</span>
             </div>
             <Stars value={r.rating} size="size-3.5" />

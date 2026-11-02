@@ -113,7 +113,7 @@ export default function Payment() {
       <PublicNavbar />
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <Steps current={2} />
-        {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {error && <div className="mb-4 animate-fade-up rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <form onSubmit={pay} className="card p-5">
             <h2 className="text-base font-semibold text-foreground">Choose payment method</h2>
@@ -124,7 +124,9 @@ export default function Payment() {
                   key={id}
                   type="button"
                   onClick={() => setMethod(id)}
-                  className={`flex items-center gap-2 rounded-lg border-2 p-3 text-sm font-medium ${method === id ? 'border-primary bg-primary/5 text-primary' : 'border-border text-foreground'}`}
+                  className={`flex items-center gap-2 rounded-2xl border-2 p-3.5 text-sm font-semibold transition-all duration-300 ease-ios active:scale-[0.97] ${
+                    method === id ? 'border-primary bg-primary/[0.06] text-primary shadow-glow' : 'border-border text-foreground hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md'
+                  }`}
                 >
                   <Icon className="size-5" /> {label}
                 </button>

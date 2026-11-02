@@ -187,7 +187,7 @@ function Overview() {
           ) : (
             <StatusBadge status="vacate_requested" />
           )}
-          <button className="btn bg-tenant text-white hover:bg-cyan-600" onClick={() => setPayOpen(true)}><CreditCard className="size-4" /> Pay rent</button>
+          <button className="btn-tenant" onClick={() => setPayOpen(true)}><CreditCard className="size-4" /> Pay rent</button>
         </div>}
       />
 
@@ -385,7 +385,7 @@ function Payments() {
       <PageHeader
         title="Fees & Payments"
         subtitle="Your rent, deposit and full payment history"
-        actions={allocated && <button className="btn bg-tenant text-white hover:bg-cyan-600" onClick={() => setPayOpen(true)}><CreditCard className="size-4" /> Pay rent</button>}
+        actions={allocated && <button className="btn-tenant" onClick={() => setPayOpen(true)}><CreditCard className="size-4" /> Pay rent</button>}
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label="Monthly rent" value={inr(booking.rent)} icon={IndianRupee} />
@@ -432,7 +432,7 @@ function Complaints() {
       <PageHeader
         title="Complaints"
         subtitle="Raise an issue and track its status"
-        actions={<button className="btn bg-tenant text-white hover:bg-cyan-600" onClick={() => setOpen(true)}><Plus className="size-4" /> Raise complaint</button>}
+        actions={<button className="btn-tenant" onClick={() => setOpen(true)}><Plus className="size-4" /> Raise complaint</button>}
       />
       <div className="grid grid-cols-3 gap-3">
         <StatTile label="Open" value={complaints.filter((c) => c.status === 'open').length} tone="bad" />
@@ -528,7 +528,7 @@ function Ratings() {
             <form onSubmit={submit} className="space-y-3">
               <Stars value={rating} size="size-7" onChange={setRating} />
               <textarea className="input" rows={4} placeholder="How is the food, cleanliness, Wi-Fi, staff…" value={comment} onChange={(e) => setComment(e.target.value)} required />
-              <button className="btn bg-tenant text-white hover:bg-cyan-600">{mine ? 'Update review' : 'Submit review'}</button>
+              <button className="btn-tenant">{mine ? 'Update review' : 'Submit review'}</button>
             </form>
           </Card>
         </div>
@@ -569,7 +569,7 @@ function Profile() {
             ))}
             <div className="sm:col-span-2"><label className="label">Address</label><textarea className="input" rows={2} value={form.address} onChange={set('address')} /></div>
             <div className="text-xs text-muted-foreground sm:col-span-2">ID proof: {user.idType} · {user.idNumber} (verified)</div>
-            <div><button className="btn bg-tenant text-white hover:bg-cyan-600">Save changes</button></div>
+            <div><button className="btn-tenant">Save changes</button></div>
           </form>
         </Card>
         <Card title="Change password">
