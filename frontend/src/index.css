@@ -2,94 +2,216 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light/dark tokens, same values as HRMS_frontEnd/src/styles/tailwind.css. */
+/* Light/dark tokens (space-separated RGB so Tailwind opacity modifiers work). */
 :root {
-  --color-background: 248 250 252;
-  --color-foreground: 15 23 42;
+  --color-background: 250 248 244;
+  --color-foreground: 33 28 25;
   --color-card: 255 255 255;
-  --color-card-foreground: 15 23 42;
-  --color-border: 226 232 240;
-  --color-muted: 241 245 249;
-  --color-muted-foreground: 100 116 139;
+  --color-card-foreground: 33 28 25;
+  --color-border: 234 227 218;
+  --color-muted: 244 240 233;
+  --color-muted-foreground: 117 106 97;
+  --color-primary: 217 119 87;
+  /* brand-violet = brinjal/plum, brand-pink = coral red */
+  --color-brand-violet: 110 52 104;
+  --color-brand-pink: 232 93 79;
+  --color-accent: 253 240 233;
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  color-scheme: light;
 }
 
 .dark {
-  --color-background: 15 23 42;
-  --color-foreground: 226 232 240;
-  --color-card: 30 41 59;
-  --color-card-foreground: 226 232 240;
-  --color-border: 51 65 85;
-  --color-muted: 51 65 85;
-  --color-muted-foreground: 148 163 184;
+  --color-background: 22 20 19;
+  --color-foreground: 240 235 228;
+  --color-card: 32 29 27;
+  --color-card-foreground: 240 235 228;
+  --color-border: 54 49 45;
+  --color-muted: 42 38 35;
+  --color-muted-foreground: 168 158 148;
+  --color-primary: 233 137 105;
+  --color-brand-violet: 197 137 186;
+  --color-brand-pink: 238 118 102;
+  --color-accent: 58 37 29;
+  color-scheme: dark;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background: rgb(var(--color-background));
-  color: rgb(var(--color-foreground));
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply font-sans;
+    font-feature-settings: 'cv11', 'ss01';
+    color: rgb(var(--color-foreground));
+    background-color: rgb(var(--color-background));
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  h1, h2, h3 {
+    @apply font-display;
+    letter-spacing: -0.015em;
+  }
+  a, button, input, select, textarea, label {
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::selection {
+    background: rgb(var(--color-primary) / 0.22);
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 0.7);
+    outline-offset: 2px;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-muted-foreground) / 0.3) transparent;
+  }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-muted-foreground) / 0.28);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--color-muted-foreground) / 0.45); }
 }
 
 @layer components {
+  /* 16px on phones stops iOS Safari from zooming into focused fields. */
   .input {
-    @apply h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/20;
+    @apply h-11 w-full rounded-xl border border-border bg-card px-3.5 text-base text-foreground shadow-sm outline-none transition-all duration-250 ease-ios placeholder:text-muted-foreground/60 hover:border-muted-foreground/40 focus:border-primary focus:shadow-none focus:ring-4 focus:ring-primary/15 sm:text-sm;
+  }
+  select.input {
+    @apply cursor-pointer appearance-none bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23878ca8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
   }
   textarea.input {
-    @apply h-auto py-2;
+    @apply h-auto py-2.5;
   }
   .label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
   }
+
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply relative inline-flex select-none items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-250 ease-ios hover:-translate-y-px active:translate-y-0 active:scale-[0.96] active:duration-100 disabled:pointer-events-none disabled:opacity-50;
+  }
+  /* Solid filled button: darkens slightly on hover. */
+  .btn-solid {
+    @apply btn text-white shadow-sm hover:shadow-md hover:brightness-[0.94];
   }
   .btn-primary {
-    @apply btn bg-primary text-white hover:bg-blue-700;
+    @apply btn-solid bg-primary;
+  }
+  .btn-owner {
+    @apply btn-solid bg-ember-500;
+  }
+  .btn-tenant {
+    @apply btn-solid bg-mist-600;
   }
   .btn-outline {
-    @apply btn border border-border bg-card text-foreground hover:bg-muted;
+    @apply btn border border-border bg-card text-foreground shadow-sm hover:border-primary/30 hover:bg-accent/60 hover:text-primary hover:shadow-md;
+  }
+  .btn-ghost {
+    @apply btn text-muted-foreground hover:bg-muted hover:text-foreground;
   }
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700;
+    @apply btn-solid bg-coral-500;
   }
   .btn-success {
-    @apply btn bg-emerald-600 text-white hover:bg-emerald-700;
+    @apply btn-solid bg-sage-600;
   }
+  .icon-btn {
+    @apply inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition-all duration-250 ease-ios hover:bg-muted hover:text-foreground active:scale-90;
+  }
+
   .card {
-    @apply rounded-xl border border-border/80 bg-card shadow-sm;
+    @apply rounded-2xl border border-border/70 bg-card shadow-md transition-[box-shadow,border-color,transform] duration-400 ease-ios dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.04),0_12px_32px_-12px_rgb(0_0_0/0.6)];
+  }
+  .card-interactive {
+    @apply cursor-pointer hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl active:translate-y-0 active:scale-[0.99] dark:hover:shadow-[0_0_0_1px_rgb(var(--color-primary)/0.25),0_24px_48px_-16px_rgb(0_0_0/0.7)];
+  }
+  .glass {
+    @apply border-white/40 bg-white/70 backdrop-blur-xl backdrop-saturate-150 dark:border-white/[0.06] dark:bg-[rgb(32_29_27/0.72)];
+  }
+  .text-gradient {
+    @apply text-primary;
+  }
+  /* Pill-shaped nav tab with a soft tinted hover. */
+  .nav-tab {
+    @apply relative inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold text-muted-foreground transition-all duration-250 ease-ios hover:bg-accent hover:text-primary active:scale-95;
+  }
+  .nav-tab.active {
+    @apply bg-accent text-primary;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 ring-inset transition-all duration-250 ease-ios hover:-translate-y-0.5 hover:shadow-md active:scale-95;
   }
   .th {
-    @apply whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
+    @apply whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
   }
   .td {
-    @apply whitespace-nowrap px-4 py-3 text-sm text-foreground;
+    @apply whitespace-nowrap px-4 py-3.5 text-sm text-foreground;
   }
 }
 
+/* ---------- Map ---------- */
 .leaflet-container {
   font: inherit;
   z-index: 0;
 }
+.leaflet-popup-content-wrapper {
+  border-radius: 16px;
+  box-shadow: 0 20px 48px -12px rgb(60 36 24 / 0.35);
+}
 .pg-marker {
-  background: #2563eb;
+  background: #D97757;
   color: #fff;
   border: 2px solid #fff;
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 9px;
   white-space: nowrap;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.2);
   transform: translate(-50%, -50%);
   width: max-content;
+  transition: transform 300ms var(--ease-spring), box-shadow 300ms var(--ease-ios);
+}
+.pg-marker:hover {
+  transform: translate(-50%, -50%) scale(1.1);
 }
 .pg-marker.active {
-  background: #7c3aed;
+  background: #6E3468;
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
 }
 .me-marker {
   width: 16px;
   height: 16px;
   border-radius: 9999px;
-  background: #06b6d4;
+  background: #4FA9DB;
   border: 3px solid #fff;
-  box-shadow: 0 0 0 6px rgb(6 182 212 / 0.3);
+  box-shadow: 0 0 0 6px rgb(79 169 219 / 0.3);
+  animation: me-pulse 2.4s var(--ease-ios) infinite;
+}
+@keyframes me-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgb(79 169 219 / 0.35); }
+  50% { box-shadow: 0 0 0 12px rgb(79 169 219 / 0); }
+}
+
+input[type='range'] {
+  accent-color: rgb(var(--color-primary));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }

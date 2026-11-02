@@ -108,7 +108,7 @@ export default function BookingRegister() {
 
         <Steps current={1} />
 
-        {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+        {error && <div className="mb-4 animate-fade-up rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
         <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
@@ -276,9 +276,19 @@ export function Steps({ current }) {
     <ol className="mb-6 flex items-center gap-2 overflow-x-auto text-xs font-semibold sm:text-sm">
       {steps.map((s, i) => (
         <li key={s} className="flex shrink-0 items-center gap-2">
-          <span className={`flex size-6 items-center justify-center rounded-full ${i <= current ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>{i + 1}</span>
+          <span
+            className={`flex size-7 items-center justify-center rounded-full transition-all duration-400 ease-spring ${
+              i <= current ? 'bg-primary text-white shadow-glow' : 'bg-muted text-muted-foreground'
+            } ${i === current ? 'scale-110 ring-4 ring-primary/15' : ''}`}
+          >
+            {i + 1}
+          </span>
           <span className={i <= current ? 'text-foreground' : 'text-muted-foreground'}>{s}</span>
-          {i < steps.length - 1 && <span className="mx-1 h-px w-6 bg-border sm:w-12" />}
+          {i < steps.length - 1 && (
+            <span className="relative mx-1 h-1 w-6 overflow-hidden rounded-full bg-border sm:w-12">
+              <span className={`absolute inset-0 origin-left bg-primary transition-transform duration-600 ease-ios ${i < current ? 'scale-x-100' : 'scale-x-0'}`} />
+            </span>
+          )}
         </li>
       ))}
     </ol>

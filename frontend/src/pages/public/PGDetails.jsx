@@ -62,8 +62,8 @@ export default function PGDetails() {
     <div className="min-h-screen bg-background pb-28">
       <PublicNavbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <button onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Back to results
+        <button onClick={() => navigate(-1)} className="group mb-5 inline-flex items-center gap-1.5 rounded-full py-1 pr-3 text-sm font-medium text-muted-foreground transition-colors duration-250 hover:text-primary">
+          <ArrowLeft className="size-4 transition-transform duration-300 ease-ios group-hover:-translate-x-1" /> Back to results
         </button>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -72,12 +72,12 @@ export default function PGDetails() {
 
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{pg.gender} PG</span>
-                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-inset ring-primary/20">{pg.gender} PG</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-300">
                   <ShieldCheck className="size-3.5" /> Verified
                 </span>
               </div>
-              <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{pg.name}</h1>
+              <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">{pg.name}</h1>
               <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="size-4" /> {pg.address}, {pg.city}
               </div>
@@ -143,11 +143,11 @@ export default function PGDetails() {
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-            <div className="card p-5">
-              <div className="text-xs text-muted-foreground">Rent starts from</div>
-              <div className="text-2xl font-bold text-foreground">{inr(stats.minRent)}<span className="text-sm font-normal text-muted-foreground"> /month</span></div>
+            <div className="card relative overflow-hidden p-5 sm:p-6">
+              <div className="relative text-xs font-medium text-muted-foreground">Rent starts from</div>
+              <div className="relative font-display text-3xl font-extrabold tracking-tight text-foreground">{inr(stats.minRent)}<span className="text-sm font-normal text-muted-foreground"> /month</span></div>
               <div className="mt-1 text-xs text-muted-foreground">Up to {inr(stats.maxRent)} · Deposit {pg.depositMonths} month rent</div>
-              <div className="mt-4 rounded-lg bg-muted/60 p-3 text-sm">
+              <div className="mt-4 rounded-2xl border border-border/60 bg-muted/50 p-3.5 text-sm transition-all duration-400 ease-ios">
                 {selRoom ? (
                   <>
                     <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your selection</div>
@@ -160,11 +160,11 @@ export default function PGDetails() {
                   <span className="text-muted-foreground">No bed selected yet. Pick a green bed from the rooms list.</span>
                 )}
               </div>
-              <button className="btn-primary mt-4 w-full" disabled={!selected} onClick={bookSlot}>
+              <button className="btn-primary mt-4 h-12 w-full" disabled={!selected} onClick={bookSlot}>
                 <CalendarCheck className="size-4" /> Book this slot
               </button>
               <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
-                <span className="flex size-9 items-center justify-center rounded-full bg-owner text-sm font-semibold text-white">{owner?.name?.[0]}</span>
+                <span className="flex size-10 items-center justify-center rounded-full bg-plum-500 text-sm font-bold text-white shadow-md">{owner?.name?.[0]}</span>
                 <div className="text-sm">
                   <div className="font-medium text-foreground">{owner?.name}</div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground"><Phone className="size-3" />{pg.phone}</div>
@@ -177,14 +177,14 @@ export default function PGDetails() {
       </main>
 
       {selected && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card p-3 shadow-lg lg:hidden">
+        <div className="glass fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 animate-toast-in rounded-3xl border p-3 pl-4 shadow-xl lg:hidden">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
             <div className="text-sm">
               <div className="font-semibold text-foreground">Room {selRoom?.roomNo} · Bed {selected.bedNo}</div>
               <div className="text-xs text-muted-foreground">{inr(selRoom?.rentPerBed)}/month</div>
               {selRoom?.dailyRentPerBed > 0 && <div className="text-xs text-muted-foreground">{inr(selRoom.dailyRentPerBed)}/day</div>}
             </div>
-            <button className="btn-primary" onClick={bookSlot}>Book this slot</button>
+            <button className="btn-primary h-11 rounded-2xl px-5" onClick={bookSlot}>Book this slot</button>
           </div>
         </div>
       )}

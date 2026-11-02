@@ -11,6 +11,9 @@ import OwnerSignup from './pages/public/OwnerSignup';
 import UserPortal from './pages/user/UserPortal';
 import OwnerPortal from './pages/owner/OwnerPortal';
 import SuperAdminPortal from './pages/superadmin/SuperAdminPortal';
+import PageTransition from './components/PageTransition';
+
+const PORTALS = ['/user', '/owner', '/super-admin'];
 
 function RequireRole({ role, children }) {
   const { user } = useAuth();
@@ -22,18 +25,23 @@ function RequireRole({ role, children }) {
 
 export default function App() {
   useTheme(); // apply saved light/dark theme on every page
+  const { pathname } = useLocation();
+  // Portals animate their own inner pages, so the shell (sidebar) is not re-mounted on every click.
+  const portal = PORTALS.find((p) => pathname === p || pathname.startsWith(`${p}/`));
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/pg/:id" element={<PGDetails />} />
-      <Route path="/book/:pgId" element={<BookingRegister />} />
-      <Route path="/payment/:bookingId" element={<Payment />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/owner-signup" element={<OwnerSignup />} />
-      <Route path="/user/*" element={<RequireRole role="user"><UserPortal /></RequireRole>} />
-      <Route path="/owner/*" element={<RequireRole role="owner"><OwnerPortal /></RequireRole>} />
-      <Route path="/super-admin/*" element={<RequireRole role="superadmin"><SuperAdminPortal /></RequireRole>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <PageTransition transitionKey={portal ?? pathname}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/pg/:id" element={<PGDetails />} />
+        <Route path="/book/:pgId" element={<BookingRegister />} />
+        <Route path="/payment/:bookingId" element={<Payment />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/owner-signup" element={<OwnerSignup />} />
+        <Route path="/user/*" element={<RequireRole role="user"><UserPortal /></RequireRole>} />
+        <Route path="/owner/*" element={<RequireRole role="owner"><OwnerPortal /></RequireRole>} />
+        <Route path="/super-admin/*" element={<RequireRole role="superadmin"><SuperAdminPortal /></RequireRole>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </PageTransition>
   );
 }

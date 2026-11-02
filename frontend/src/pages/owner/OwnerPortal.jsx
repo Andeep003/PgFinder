@@ -62,7 +62,7 @@ export default function OwnerPortal() {
   );
 }
 
-const ownerBtn = 'btn bg-owner text-white hover:bg-violet-700';
+const ownerBtn = 'btn-owner';
 
 function PgFilter({ pgs, value, onChange, allowAll = true }) {
   return (
@@ -392,7 +392,7 @@ function Rooms() {
     if (window.confirm(`Delete room ${room.roomNo}?`)) savePg({ ...pg, rooms: pg.rooms.filter((r) => r.id !== room.id) });
   };
 
-  const bedStyle = { available: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300', booked: 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300', occupied: 'border-violet-300 bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300' };
+  const bedStyle = { available: 'border-sage-300 bg-sage-50 text-sage-700 dark:bg-sage-900/40 dark:text-sage-300', booked: 'border-butter-300 bg-butter-100 text-butter-700 dark:bg-butter-700/20 dark:text-butter-300', occupied: 'border-plum-300 bg-plum-50 text-plum-700 dark:bg-plum-900/40 dark:text-plum-300' };
 
   return (
     <>
