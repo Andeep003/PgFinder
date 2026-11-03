@@ -81,7 +81,7 @@ class BackendApiTest {
                   "rules":[],
                   "images":[],
                   "foodMenu":{},
-                  "depositMonths":1
+                  "depositAmount":12500
                 }
                 """;
 
@@ -92,6 +92,7 @@ class BackendApiTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.ownerId").value("u-owner1"))
                 .andExpect(jsonPath("$.status").value("pending"))
+                .andExpect(jsonPath("$.depositAmount").value(12500))
                 .andExpect(jsonPath("$.googleMapsUrl").value("https://www.google.com/maps/search/?api=1&query=17.4486,78.3908"));
 
         mvc.perform(post("/api/owner/pgs")

@@ -196,7 +196,8 @@ public class OwnerPgService {
         pg.setRules(request.rules() == null ? new ArrayList<>() : new ArrayList<>(request.rules()));
         pg.setImages(request.images() == null ? new ArrayList<>() : new ArrayList<>(request.images()));
         pg.setFoodMenu(request.foodMenu() == null ? Map.of() : request.foodMenu());
-        pg.setDepositMonths(request.depositMonths());
+        pg.setDepositAmount(request.depositAmount());
+        pg.setLegacyDepositMonths(0);
     }
 
     private static void validateGoogleMapsUrl(String value) {

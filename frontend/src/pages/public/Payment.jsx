@@ -187,7 +187,7 @@ export default function Payment() {
               <Row k="Room / Bed" v={`${booking.roomNo} / ${booking.bedNo}`} />
               <Row k="Move-in" v={fmtDate(booking.moveInDate)} />
               <Row k={`Rent (${bookingPeriod})`} v={inr(initialRent)} />
-              <Row k="Security deposit" v={inr(booking.deposit)} />
+              <Row k="Security deposit" v={booking.deposit ? inr(booking.deposit) : 'Waived'} />
               <div className="flex justify-between border-t border-border pt-2 text-base font-bold text-foreground">
                 <span>Total</span>
                 <span>{inr(total)}</span>

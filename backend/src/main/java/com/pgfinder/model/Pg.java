@@ -67,7 +67,10 @@ public class Pg {
     @Column(columnDefinition = "TEXT")
     private Map<String, Map<String, String>> foodMenu = new LinkedHashMap<>();
 
-    private int depositMonths = 1;
+    private int depositAmount = 10000;
+
+    @Column(name = "deposit_months")
+    private Integer legacyDepositMonths;
 
     /** pending | approved | rejected | disabled - only approved PGs are shown publicly. */
     private String status = "pending";

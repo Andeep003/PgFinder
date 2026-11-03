@@ -148,7 +148,7 @@ public class DataSeeder implements CommandLineRunner {
                         + "?auto=format&fit=crop&w=1000&q=70")
                 .toList()));
         pg.setFoodMenu(foodMenu());
-        pg.setDepositMonths(1);
+        pg.setDepositAmount(10000);
         pg.setStatus(def.status());
         pg.setCreatedAt(LocalDate.now().plusDays(-200 + i * 9L));
         makeRooms(pg, i + 1, def.floors(), def.roomsPerFloor(), def.priceFactor());

@@ -4,7 +4,7 @@ import { ArrowLeft, BedDouble, Sparkles, UserPlus, Lock } from 'lucide-react';
 import PublicNavbar from '../../components/PublicNavbar';
 import { BedLegend, RoomCard } from '../../components/pg';
 import { Card, EmptyState, Modal, Photo, toast } from '../../components/ui';
-import { useDB, findPg, findRoom, registerUser, createBooking, calculatePeriodRent } from '../../store/db';
+import { useDB, findPg, findRoom, registerUser, createBooking, calculatePeriodRent, bookingDeposit } from '../../store/db';
 import { useAuth } from '../../store/auth';
 import { inr } from '../../utils/format';
 import { deleteIdentityProof, saveIdentityProof, validateIdentityProof } from '../../utils/identityProof';
@@ -64,6 +64,7 @@ export default function BookingRegister() {
   const room = findRoom(pg, sel.roomId);
   const bed = room?.beds.find((b) => b.bedNo === sel.bedNo);
   const loggedInTenant = user && user.role === 'user';
+  const deposit = bookingDeposit(pg, durationType, Number(durationDays));
 
   if (user && user.role !== 'user') {
     return (
@@ -296,7 +297,7 @@ export default function BookingRegister() {
                       required
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {room?.dailyRentPerBed ? `Daily rate: ${inr(room.dailyRentPerBed)}.` : 'Daily rate has not been set by the PG owner.'}
+                      {room?.dailyRentPerBed ? `Daily rate: ${inr(room.dailyRentPerBed)}. ${Number(durationDays) < 20 ? 'No security deposit for stays under 20 days.' : 'Security deposit applies for stays of 20 days or longer.'}` : 'Daily rate has not been set by the PG owner.'}
                     </p>
                   </div>
                 )}
@@ -305,8 +306,8 @@ export default function BookingRegister() {
                   <dl className="mt-4 space-y-2 text-sm">
                     <div className="flex justify-between"><dt className="text-muted-foreground">Monthly rent</dt><dd className="font-medium text-foreground">{inr(room.rentPerBed)}</dd></div>
                     <div className="flex justify-between"><dt className="text-muted-foreground">{durationType === 'day' ? `Rent (${durationDays || 0} days)` : 'Rent (1 month)'}</dt><dd className="font-medium text-foreground">{inr(calculatePeriodRent(room.rentPerBed, durationType, Number(durationDays), room.dailyRentPerBed))}</dd></div>
-                    <div className="flex justify-between"><dt className="text-muted-foreground">Security deposit (refundable)</dt><dd className="font-medium text-foreground">{inr(durationType === 'day' ? 0 : room.rentPerBed * pg.depositMonths)}</dd></div>
-                    <div className="flex justify-between border-t border-border pt-2 text-base"><dt className="font-semibold text-foreground">Pay now</dt><dd className="font-bold text-foreground">{inr(calculatePeriodRent(room.rentPerBed, durationType, Number(durationDays), room.dailyRentPerBed) + (durationType === 'day' ? 0 : room.rentPerBed * pg.depositMonths))}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted-foreground">Security deposit (refundable)</dt><dd className="font-medium text-foreground">{deposit ? inr(deposit) : 'Waived'}</dd></div>
+                    <div className="flex justify-between border-t border-border pt-2 text-base"><dt className="font-semibold text-foreground">Pay now</dt><dd className="font-bold text-foreground">{inr(calculatePeriodRent(room.rentPerBed, durationType, Number(durationDays), room.dailyRentPerBed) + deposit)}</dd></div>
                   </dl>
                 )}
 

@@ -137,7 +137,7 @@ function buildPg(def, i) {
     rules: ['Gate closes at 11:00 PM', 'No smoking / alcohol inside premises', 'Visitors allowed till 8:00 PM', '1 month notice before vacating'],
     images: pickPhotos(i),
     foodMenu: JSON.parse(JSON.stringify(DEFAULT_FOOD_MENU)),
-    depositMonths: 1,
+    depositAmount: 10000,
     status: def.status || 'approved',
     createdAt: isoDaysFromNow(-200 + i * 9),
     rooms: makeRooms(i + 1, def.floors, def.rpf, def.pf),
@@ -182,14 +182,14 @@ export function buildSeed() {
     const paidUntil = new Date(new Date(moveIn).getTime() + months * 30 * DAY).toISOString().slice(0, 10);
     bookings.push({
       id, userId, pgId, roomId: room.id, roomNo: room.roomNo, bedNo: bed.bedNo,
-      rent: room.rentPerBed, deposit: room.rentPerBed * p.depositMonths,
+      rent: room.rentPerBed, deposit: p.depositAmount,
       status, bookedOn, moveInDate: moveIn,
       allocatedOn: status === 'allocated' ? moveIn : null,
       paidUntil,
     });
     payments.push({
       id: `pay-${id}-0`, bookingId: id, userId, pgId,
-      amount: room.rentPerBed + room.rentPerBed * p.depositMonths,
+      amount: room.rentPerBed + p.depositAmount,
       type: 'Booking (Deposit + 1st month)', method: 'UPI', txnId: `TXN${Math.floor(Math.random() * 1e10)}`,
       date: bookedOn, status: 'success',
     });
@@ -269,7 +269,7 @@ export function buildNearbyPgs(lat, lng, startIndex, placeName = 'your area') {
       rules: ['Gate closes at 11:00 PM', 'No smoking / alcohol inside premises', '1 month notice before vacating'],
       images: pickPhotos(i),
       foodMenu: JSON.parse(JSON.stringify(DEFAULT_FOOD_MENU)),
-      depositMonths: 1,
+      depositAmount: 10000,
       status: 'approved',
       createdAt: isoDaysFromNow(-30),
       rooms: makeRooms(i + 1, 2, 3, 0.9 + rand() * 0.4),
