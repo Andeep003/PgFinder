@@ -4,7 +4,7 @@ import { ArrowLeft, CalendarCheck, CheckCircle2, MapPin, Phone, ShieldCheck, Ute
 import PublicNavbar from '../../components/PublicNavbar';
 import { BedLegend, FoodMenuTable, ImageGallery, PGMap, ReviewList, RoomCard } from '../../components/pg';
 import { Card, EmptyState, Stars } from '../../components/ui';
-import { useDB, findPg, pgStats, pgRating, findUser } from '../../store/db';
+import { useDB, findPg, pgStats, pgRating, pgDepositAmount, findUser } from '../../store/db';
 import { inr } from '../../utils/format';
 import { apiGet, apiImageUrl } from '../../api';
 import { googleMapsUrl } from '../../utils/geo';
@@ -137,7 +137,7 @@ export default function PGDetails() {
               </ul>
             </Card>
 
-            <Card title={`Reviews (${reviews.length})`}>
+            <Card title={`Resident reviews (${reviews.length})`}>
               <ReviewList reviews={reviews} />
             </Card>
           </div>
@@ -146,7 +146,7 @@ export default function PGDetails() {
             <div className="card relative overflow-hidden p-5 sm:p-6">
               <div className="relative text-xs font-medium text-muted-foreground">Rent starts from</div>
               <div className="relative font-display text-3xl font-extrabold tracking-tight text-foreground">{inr(stats.minRent)}<span className="text-sm font-normal text-muted-foreground"> /month</span></div>
-              <div className="mt-1 text-xs text-muted-foreground">Up to {inr(stats.maxRent)} · Deposit {pg.depositMonths} month rent</div>
+              <div className="mt-1 text-xs text-muted-foreground">Up to {inr(stats.maxRent)} · Security deposit {inr(pgDepositAmount(pg))}</div>
               <div className="mt-4 rounded-2xl border border-border/60 bg-muted/50 p-3.5 text-sm transition-all duration-400 ease-ios">
                 {selRoom ? (
                   <>

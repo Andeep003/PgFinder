@@ -9,7 +9,7 @@ import { Card, EmptyState, Modal, PageHeader, Photo, StatTile, StatusBadge, Tabl
 import { BedLegend, ReviewList } from '../../components/pg';
 import { useAuth } from '../../store/auth';
 import {
-  useDB, findUser, findPg, pgStats, pgRating, savePg, deletePg, setBookingStatus, setBedStatus,
+  useDB, findUser, findPg, pgStats, pgRating, pgDepositAmount, savePg, deletePg, setBookingStatus, setBedStatus,
   updateComplaint, recordManualPayment, confirmVacateRequest,
 } from '../../store/db';
 import { AMENITIES, DEFAULT_FOOD_MENU } from '../../data/seed';
@@ -190,7 +190,7 @@ function Dashboard() {
 const blankPg = (ownerId) => ({
   ownerId, name: '', gender: 'Boys', address: '', locality: '', city: '', lat: '', lng: '', phone: '',
   googleMapsUrl: '', description: '', amenities: ['Wi-Fi', 'Food'],
-  rules: ['Gate closes at 11:00 PM'], images: [], depositMonths: 1,
+  rules: ['Gate closes at 11:00 PM'], images: [], depositAmount: 10000,
   foodMenu: structuredClone(DEFAULT_FOOD_MENU), status: 'pending', rooms: [],
 });
 
@@ -286,7 +286,7 @@ function PgForm({ pg: initial, onClose }) {
     e.preventDefault();
     if (!pg.images.length) return toast('Please upload at least one photo', 'error');
     if (!isGoogleMapsUrl(pg.googleMapsUrl)) return toast('Enter a valid Google Maps link using HTTPS', 'error');
-    savePg({ ...pg, lat: Number(pg.lat), lng: Number(pg.lng), depositMonths: Number(pg.depositMonths) });
+    savePg({ ...pg, lat: Number(pg.lat), lng: Number(pg.lng), depositAmount: Number(pg.depositAmount) });
     toast(isNew ? 'PG submitted for Super Admin approval' : 'PG updated');
     onClose();
   };
@@ -315,7 +315,7 @@ function PgForm({ pg: initial, onClose }) {
             <button type="button" className="btn-outline" onClick={locate} title="Use current location"><Crosshair className="size-4" /></button>
           </div>
           <div><label className="label">Contact phone</label><input className="input" value={pg.phone} onChange={set('phone')} required /></div>
-          <div><label className="label">Deposit (months of rent)</label><input className="input" type="number" min={0} max={6} value={pg.depositMonths} onChange={set('depositMonths')} /></div>
+          <div><label className="label">Security deposit (INR)</label><input className="input" type="number" min={0} max={100000000} step={1} value={pg.depositAmount ?? pgDepositAmount(pg)} onChange={set('depositAmount')} required /><p className="mt-1 text-xs text-muted-foreground">Enter the fixed refundable deposit for this PG.</p></div>
           <div className="sm:col-span-2"><label className="label">Description</label><textarea className="input" rows={3} value={pg.description} onChange={set('description')} /></div>
         </div>
 

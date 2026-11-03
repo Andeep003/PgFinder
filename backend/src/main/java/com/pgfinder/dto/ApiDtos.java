@@ -58,7 +58,7 @@ public final class ApiDtos {
                                  @Size(max = 2000) String description,
                                  List<String> amenities, List<String> rules, List<String> images,
                                  Map<String, Map<String, String>> foodMenu,
-                                 @Min(0) @Max(24) int depositMonths) {
+                                 @Min(0) @Max(100_000_000) int depositAmount) {
     }
 
     public record RoomWriteRequest(@NotBlank @Size(max = 30) String roomNo,

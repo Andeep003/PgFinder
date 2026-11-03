@@ -8,7 +8,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { Card, EmptyState, Modal, PageHeader, StatTile, StatusBadge, Stars, Table, Photo, toast } from '../../components/ui';
 import { FoodMenuTable, ReviewList } from '../../components/pg';
 import { useAuth } from '../../store/auth';
-import { useDB, findPg, findUser, findRoom, payRent, addComplaint, upsertReview, updateUser, pgRating, requestVacate } from '../../store/db';
+import { useDB, findPg, findUser, findRoom, payRent, addComplaint, upsertReview, updateUser, pgRating, requestVacate, canReviewPg } from '../../store/db';
 import { daysBetween, fmtDate, inr, todayIso, todayName } from '../../utils/format';
 
 // The resident's current booking: an active one if any, else the latest.
@@ -33,8 +33,9 @@ export function dueInfo(paidUntil) {
 }
 
 export default function UserPortal() {
-  const { booking, complaints } = useMyBooking();
+  const { booking, complaints, user, db } = useMyBooking();
   const openComplaints = complaints.filter((c) => c.status !== 'resolved').length;
+  const canReview = booking && canReviewPg(db, user.id, booking.pgId);
   const nav = [
     { to: '/user', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/user/payments', label: 'Fees & Payments', icon: Wallet },
@@ -51,7 +52,7 @@ export default function UserPortal() {
         <Route path="payments" element={booking ? <Payments /> : <NoBooking />} />
         <Route path="food" element={allocated ? <Food /> : <Locked />} />
         <Route path="complaints" element={allocated ? <Complaints /> : <Locked />} />
-        <Route path="ratings" element={allocated ? <Ratings /> : <Locked />} />
+        <Route path="ratings" element={canReview ? <Ratings /> : <Locked />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/user" replace />} />
       </Routes>
@@ -506,7 +507,7 @@ function Ratings() {
 
   return (
     <>
-      <PageHeader title="Ratings & Reviews" subtitle={`Rate your stay at ${pg.name}`} />
+      <PageHeader title="Ratings & Reviews" subtitle={`Share your experience at ${pg.name}. Residents can review after bed allocation.`} />
       <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
         <div className="space-y-5">
           <Card title="Overall rating">

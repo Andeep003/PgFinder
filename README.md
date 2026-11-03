@@ -45,7 +45,17 @@ photos, and weekly food menus. The dev profile also seeds demo accounts:
 | Guest | `guest@pgfinder.local` | `demo1234` |
 | Admin | `admin@pgfinder.local` | `demo1234` |
 
-These accounts are created only with the `dev` profile. Do not use demo credentials in production.
+The credentials above are for the backend API. The current React login page uses its own
+browser-local demo accounts instead:
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@pgfinder.com` | `admin123` |
+| Owner | `owner@pgfinder.com` | `owner123` |
+| Resident | `user@pgfinder.com` | `user123` |
+
+These frontend accounts and their data are stored in browser local storage. Backend demo accounts
+are created only with the `dev` profile. Do not use demo credentials in production.
 Passwords for registered users are stored as BCrypt hashes. Login and registration return a
 24-hour bearer token; pass it as `Authorization: Bearer <token>` to protected endpoints.
 
@@ -59,11 +69,19 @@ Listing deletion is a soft delete (`status=disabled`) so existing booking/review
 preserved. New and edited listings are set to `pending` until an admin approves them. Booking
 creation locks the bed row and rejects overlapping date ranges.
 
+In the frontend demo, residents can submit or update one review for a PG after the owner allocates
+their bed; former residents can continue to manage their review. Reviews appear publicly on that
+PG's details page. Demo reviews are stored in browser local storage and are not synchronized
+between devices or browsers.
+
 ## Photo uploads
 
 Photos are stored on the local filesystem, not in the database. The default folder is `uploads/`;
 override it with `UPLOAD_DIR`. Uploads accept JPEG, PNG, or WebP up to 10 MB using multipart field
 `file`. The API returns a relative URL under `/uploads/`.
+
+PG owners set a fixed refundable security deposit in INR in the PG listing form. The amount is
+displayed in the listing details and included in a resident's booking total.
 
 During resident bed booking, the resident must also provide an identity proof photo. In this
 browser-based demo, the image is stored in the browser's IndexedDB and shown in booking details

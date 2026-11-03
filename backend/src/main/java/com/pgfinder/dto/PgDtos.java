@@ -68,15 +68,24 @@ public final class PgDtos {
     public record PgDetail(String id, String ownerId, String name, String gender, String address, String locality,
                            String city, String googleMapsUrl, double lat, double lng, String phone, String description,
                            List<String> amenities, List<String> rules, List<String> images,
-                           Map<String, Map<String, String>> foodMenu, int depositMonths, String status,
+                           Map<String, Map<String, String>> foodMenu, int depositAmount, String status,
                            LocalDate createdAt, List<RoomDto> rooms, PgStats stats) {
         public static PgDetail from(Pg pg) {
             return new PgDetail(pg.getId(), pg.getOwnerId(), pg.getName(), pg.getGender(), pg.getAddress(),
                     pg.getLocality(), pg.getCity(), mapsUrlFor(pg), pg.getLat(), pg.getLng(), pg.getPhone(), pg.getDescription(),
                     List.copyOf(pg.getAmenities()), List.copyOf(pg.getRules()), PgDtos.images(pg),
-                    pg.getFoodMenu(), pg.getDepositMonths(), pg.getStatus(), pg.getCreatedAt(),
+                    pg.getFoodMenu(), resolvedDepositAmount(pg), pg.getStatus(), pg.getCreatedAt(),
                     pg.getRooms().stream().map(RoomDto::from).toList(), PgStats.of(pg));
         }
+    }
+
+    private static int resolvedDepositAmount(Pg pg) {
+        if (pg.getDepositAmount() != 0 || pg.getLegacyDepositMonths() == null
+                || pg.getLegacyDepositMonths() <= 0) {
+            return pg.getDepositAmount();
+        }
+        return pg.getRooms().stream().mapToInt(Room::getRentPerBed).min().orElse(0)
+                * pg.getLegacyDepositMonths();
     }
 
     private static String mapsUrlFor(Pg pg) {

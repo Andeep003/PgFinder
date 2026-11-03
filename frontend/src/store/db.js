@@ -84,6 +84,12 @@ export function pgStats(pg) {
   };
 }
 
+export function pgDepositAmount(pg) {
+  if (pg.depositAmount != null) return Number(pg.depositAmount);
+  const lowestRent = Math.min(...(pg.rooms || []).map((room) => room.rentPerBed));
+  return Number.isFinite(lowestRent) ? lowestRent * (pg.depositMonths || 1) : 0;
+}
+
 export function pgRating(s, pgId) {
   const rs = s.reviews.filter((r) => r.pgId === pgId);
   if (!rs.length) return { avg: 0, count: 0 };
@@ -131,9 +137,20 @@ export function updateUser(id, patch) {
   });
 }
 
+export function canReviewPg(db, userId, pgId) {
+  return db.bookings.some((booking) =>
+    booking.userId === userId
+    && booking.pgId === pgId
+    && ['allocated', 'vacate_requested', 'vacated'].includes(booking.status));
+}
+
 /** Creates a booking in `payment_pending` and holds the bed until payment completes. */
 export function calculatePeriodRent(monthlyRent, durationType, durationDays, dailyRent) {
   return durationType === 'day' ? dailyRent * durationDays : monthlyRent;
+}
+
+export function bookingDeposit(pg, durationType, durationDays) {
+  return durationType === 'day' && durationDays < 20 ? 0 : pgDepositAmount(pg);
 }
 
 export function createBooking({
@@ -168,7 +185,7 @@ export function createBooking({
       initialRent: calculatePeriodRent(room.rentPerBed, durationType, durationDays, room.dailyRentPerBed),
       durationType,
       durationDays: durationType === 'day' ? durationDays : 30,
-      deposit: durationType === 'day' ? 0 : room.rentPerBed * (pg.depositMonths || 1),
+      deposit: bookingDeposit(pg, durationType, durationDays),
       status: 'payment_pending',
       bookedOn: today(),
       moveInDate,
@@ -194,7 +211,7 @@ export function completeBookingPayment(bookingId, method) {
     const payment = {
       id: uid('pay'), bookingId: bk.id, userId: bk.userId, pgId: bk.pgId,
       amount: (bk.initialRent ?? bk.rent) + bk.deposit,
-      type: `Booking (Deposit + ${bk.durationType === 'day' ? `${bk.durationDays} days` : '1 month'})`, method,
+      type: `Booking (${bk.deposit > 0 ? 'Deposit + ' : ''}${bk.durationType === 'day' ? `${bk.durationDays} days` : '1 month'})`, method,
       txnId: `TXN${Math.floor(Math.random() * 1e10)}`, date: today(), status: 'success',
     };
     s.payments.push(payment);
@@ -301,6 +318,9 @@ export function updateComplaint(id, patch) {
 
 export function upsertReview({ pgId, userId, userName, rating, comment }) {
   update((s) => {
+    if (!canReviewPg(s, userId, pgId)) {
+      throw new Error('You can review this PG after the owner allocates your bed.');
+    }
     const existing = s.reviews.find((r) => r.pgId === pgId && r.userId === userId);
     if (existing) Object.assign(existing, { rating, comment, date: today() });
     else s.reviews.push({ id: uid('rv'), pgId, userId, userName, rating, comment, date: today() });
