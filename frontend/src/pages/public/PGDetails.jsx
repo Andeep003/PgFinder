@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarCheck, CheckCircle2, MapPin, Phone, ShieldCheck, Utensils } from 'lucide-react';
+import { ArrowLeft, CalendarCheck, CheckCircle2, MapPin, MessageCircle, Phone, ShieldCheck, Utensils } from 'lucide-react';
 import PublicNavbar from '../../components/PublicNavbar';
 import { BedLegend, FoodMenuTable, ImageGallery, PGMap, ReviewList, RoomCard } from '../../components/pg';
 import { Card, EmptyState, Stars } from '../../components/ui';
@@ -57,6 +57,10 @@ export default function PGDetails() {
   const bookSlot = () => {
     navigate(`/book/${pg.id}?room=${selected.roomId}&bed=${selected.bedNo}`);
   };
+  const ownerPhone = (pg.phone || '').trim();
+  const phoneDigits = ownerPhone.replace(/\D/g, '');
+  const whatsappUrl = phoneDigits
+    ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(`Hi, I'm interested in ${pg.name}.`)}` : null;
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -167,9 +171,25 @@ export default function PGDetails() {
                 <span className="flex size-10 items-center justify-center rounded-full bg-plum-500 text-sm font-bold text-white shadow-md">{owner?.name?.[0]}</span>
                 <div className="text-sm">
                   <div className="font-medium text-foreground">{owner?.name}</div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground"><Phone className="size-3" />{pg.phone}</div>
+                  {ownerPhone && (
+                    <a href={`tel:${ownerPhone}`} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary">
+                      <Phone className="size-3" />{ownerPhone}
+                    </a>
+                  )}
                 </div>
               </div>
+              {ownerPhone && (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <a href={`tel:${ownerPhone}`} className="btn-outline h-10 justify-center">
+                    <Phone className="size-4" /> Call owner
+                  </a>
+                  {whatsappUrl && (
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-outline h-10 justify-center">
+                      <MessageCircle className="size-4" /> WhatsApp
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
             <PGMap center={{ lat: pg.lat, lng: pg.lng, name: pg.name }} items={[{ pg, stats }]} height="h-56" zoom={15} showMe={false} />
           </aside>
