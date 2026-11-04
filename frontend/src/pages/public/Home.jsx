@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BedDouble, Crosshair, Loader2, MapPin, Search, SlidersHorizontal, Map as MapIcon, List, ShieldCheck, Wallet, Star } from 'lucide-react';
 import PublicNavbar from '../../components/PublicNavbar';
 import { PGCard, PGMap } from '../../components/pg';
@@ -62,8 +62,15 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [apiPgs, setApiPgs] = useState(null);
   const [apiStatus, setApiStatus] = useState('loading');
+  const resultsHeadingRef = useRef(null);
   const centerLat = center?.lat;
   const centerLng = center?.lng;
+
+  const scrollToResults = () => {
+    window.requestAnimationFrame(() => {
+      resultsHeadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   useEffect(() => {
     if (centerLat == null || centerLng == null) return undefined;
@@ -146,6 +153,7 @@ export default function Home() {
         isPgPublic(db, pg) && pg.name.toLowerCase().includes(searchTerm.toLowerCase()));
       if (matches.length > 0 || hasLocalMatch) {
         setNameQuery(searchTerm);
+        scrollToResults();
         setSearching(false);
         return;
       }
@@ -154,6 +162,7 @@ export default function Home() {
         isPgPublic(db, pg) && pg.name.toLowerCase().includes(searchTerm.toLowerCase()));
       if (hasLocalMatch) {
         setNameQuery(searchTerm);
+        scrollToResults();
         setSearching(false);
         return;
       }
@@ -163,6 +172,7 @@ export default function Home() {
     if (hit) {
       setNameQuery('');
       applyCenter({ ...hit, source: 'search' });
+      scrollToResults();
     } else {
       setNameQuery(searchTerm);
       setLocError(`No PG name or location matched "${searchTerm}". Try another name, area, locality, or city.`);
@@ -315,7 +325,7 @@ export default function Home() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {locError && <div className="mb-4 animate-fade-up rounded-2xl border border-butter-300 bg-butter-100/70 px-4 py-3 text-sm text-butter-700 dark:border-butter-700 dark:bg-butter-700/15 dark:text-butter-200">{locError}</div>}
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div ref={resultsHeadingRef} className="mb-4 scroll-mt-24 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin className="size-4 text-primary" />
